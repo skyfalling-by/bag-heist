@@ -6724,7 +6724,7 @@ function netHostStart() {
   netHideLobby();
   if (ui.pauseBtn) ui.pauseBtn.classList.add('hidden');
   clearInterval(NET.hostTimer);
-  NET.hostTimer = setInterval(netHostBroadcast, 66);
+  NET.hostTimer = setInterval(netHostBroadcast, 50);
   clearInterval(NET.watchTimer);
   NET.watchTimer = setInterval(netHostWatchdog, 2000);
   netHostBroadcast();
@@ -6770,7 +6770,7 @@ function netPackSnapshot() {
       s.carrying.map(b => b.room), s.doubleNext ? 1 : 0
     ]),
     bn: G.bins.map(b => [b.room, b.filled, until(b.flashUntil)]),
-    bg: G.bags.filter(b => !b.sorted).map(b => [b.id, b.room, r(b.x), r(b.y), b.carriedBy || '', until(b.lockUntil)]),
+    bg: G.bags.filter(b => !b.sorted && !b.carriedBy).map(b => [b.id, b.room, r(b.x), r(b.y), '', until(b.lockUntil)]),
     wd: [
       r(G.warden.x), r(G.warden.y), G.warden.mode || 'idle',
       G.warden.target && G.warden.targetKind === 'student' ? G.warden.target.id : '',
@@ -6950,7 +6950,7 @@ function netStartClient(data) {
   updateHUD(true);
   maybeRotateHint();
   clearInterval(NET.inputTimer);
-  NET.inputTimer = setInterval(netSendInput, 50);
+  NET.inputTimer = setInterval(netSendInput, 33);
 }
 function netSendInput() {
   if (!netClientMode || state !== 'playing' || !G || G.ending || !NET.started) return;
@@ -7000,7 +7000,6 @@ function netApplySnapshot(d) {
     s._tx = row[1];
     s._ty = row[2];
     if (s._nx == null) { s._nx = row[1]; s._ny = row[2]; }
-    if (s.isPlayer) { s.x = row[1]; s.y = row[2]; }
     s.facing = row[3];
     s.walkPhase = row[4];
     s.hearts = row[5];
@@ -7085,18 +7084,45 @@ function netApplySnapshot(d) {
 }
 function netClientFrame(dt) {
   if (!G || !netClientMode) return;
-  for (const s of G.students) {
-    if (s._tx == null) continue;
-    if (s.isPlayer) {
-      s.x = s._tx; s.y = s._ty;
-      continue;
+  const local = G.player;
+  if (local && local._tx != null) {
+    // Local prediction: react to keys immediately instead of waiting one snapshot.
+    if (local.alive && !local.captured) {
+      let dx = 0, dy = 0;
+      if (keys.has('w') || keys.has('arrowup')) dy -= 1;
+      if (keys.has('s') || keys.has('arrowdown')) dy += 1;
+      if (keys.has('a') || keys.has('arrowleft')) dx -= 1;
+      if (keys.has('d') || keys.has('arrowright')) dx += 1;
+      if (joystick.active && (Math.abs(joystick.nx) > 0.12 || Math.abs(joystick.ny) > 0.12)) {
+        dx = joystick.nx;
+        dy = joystick.ny;
+      }
+      if (dx || dy) {
+        const len = Math.hypot(dx, dy);
+        if (len > 1) { dx /= len; dy /= len; }
+        moveAgent(local, dx, dy, dt, getStudentSpeed(local), 12);
+        local.lastRoom = roomAt(local.x, local.y);
+      }
     }
-    const k = Math.min(1, dt * 14);
+    // Reconcile softly. A wildly different position means a teleport/capture.
+    const err = Math.hypot(local.x - local._tx, local.y - local._ty);
+    if (err > 150) {
+      local.x = local._tx;
+      local.y = local._ty;
+    } else if (err > 0.8) {
+      const k = Math.min(1, dt * 8);
+      local.x += (local._tx - local.x) * k;
+      local.y += (local._ty - local.y) * k;
+    }
+  }
+  for (const s of G.students) {
+    if (s._tx == null || s.isPlayer) continue;
+    const k = Math.min(1, dt * 18);
     s.x += (s._tx - s.x) * k;
     s.y += (s._ty - s.y) * k;
   }
   if (G.warden && G.warden._nx != null) {
-    const k = Math.min(1, dt * 14);
+    const k = Math.min(1, dt * 18);
     G.warden.x += (G.warden._nx - G.warden.x) * k;
     G.warden.y += (G.warden._ny - G.warden.y) * k;
   }
