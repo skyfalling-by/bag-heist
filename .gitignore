@@ -1,0 +1,5 @@
+node_modules/
+.chrome-test/
+shots/
+deploy-body.json
+pages-body.json

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#171a18">
+<title>袋走计划 · 午夜搬迁</title>
+<style>/*__STYLE__*/</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="game" aria-label="袋走计划游戏画面"></canvas>
+
+  <!-- ======================= IN-GAME HUD ======================= -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div class="hud-brand">
+        <span class="brand-mark">袋</span>
+        <div class="brand-copy"><strong>袋走计划</strong><small>BAG HEIST · 23:47</small></div>
+      </div>
+
+      <div class="clock-card">
+        <div class="clock-top"><span>天亮倒计时</span><strong id="timer">02:30</strong></div>
+        <div class="pbar"><i id="progress-bar"></i></div>
+        <div class="clock-meta">
+          <span id="sorted-text">已归位 0 / 48</span>
+          <span id="caught-text">秦姨抓到 0 人</span>
+        </div>
+      </div>
+
+      <div class="hud-tools">
+        <button id="sound-btn" class="round-btn" type="button" title="音效开关" aria-label="音效开关">♪</button>
+        <button id="help-btn" class="round-btn" type="button" title="玩法说明" aria-label="玩法说明">?</button>
+        <button id="pause-btn" class="round-btn" type="button" title="暂停" aria-label="暂停">Ⅱ</button>
+      </div>
+    </div>
+
+    <div id="target-warning" class="target-warning hidden">
+      <span class="tw-kicker">TARGET LOCKED</span>
+      <strong>秦姨盯上你了</strong>
+      <span class="tw-sub">跑起来，别被堵在房间里</span>
+    </div>
+
+    <div id="rescue-banner" class="rescue-banner hidden">
+      <span class="rb-icon">!</span>
+      <div class="rb-copy">
+        <span>RESCUE WINDOW</span>
+        <strong id="rescue-text">有人被抓住了</strong>
+        <em id="rescue-hint">捡起发光的铃铛包，把仇恨引到自己身上</em>
+      </div>
+      <b id="rescue-timer">14s</b>
+    </div>
+
+    <div id="feed" class="feed" aria-live="polite"></div>
+
+    <div class="hud-bottom">
+      <div class="player-card" id="player-card">
+        <div class="pc-stamp" id="pc-stamp">疾</div>
+        <div class="pc-body">
+          <div class="pc-title"><strong id="pc-name">阿疾</strong><span id="pc-buff">疾风 · 移速 +15%</span></div>
+          <div class="pc-hearts" id="pc-hearts"></div>
+          <div class="pc-carry" id="pc-carry"></div>
+        </div>
+        <div class="dash-meter">
+          <span>冲刺</span>
+          <div class="dash-track"><i id="dash-fill"></i></div>
+          <small>SHIFT</small>
+        </div>
+      </div>
+
+      <div class="prompt-stack">
+        <div id="action-prompt" class="action-prompt hidden"><kbd>空格</kbd><span></span></div>
+        <div id="goal-hint" class="goal-hint">走进寝室，靠近书包自动拾取</div>
+      </div>
+
+      <div class="hud-bottom-right">
+        <div id="mini-lock" class="mini-lock hidden">被锁定</div>
+      </div>
+    </div>
+
+    <div id="controls-hint" class="controls-hint">WASD 移动 · SHIFT 冲刺 · 空格 投袋 · P 暂停</div>
+
+    <div id="touch-ui" class="touch-ui">
+      <div id="joystick" class="joystick"><div id="joystick-knob"></div><span>移动</span></div>
+      <div class="touch-actions">
+        <button id="touch-dash" class="touch-btn dash" type="button">冲</button>
+        <button id="touch-throw" class="touch-btn throw" type="button">投</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= MENU ======================= -->
+  <section id="menu" class="screen menu-screen">
+    <div class="menu-sheet">
+      <div class="sheet-tape tape-a"></div>
+      <div class="sheet-tape tape-b"></div>
+
+      <div class="menu-left">
+        <div class="folio"><span>NIGHT SHIFT</span><b>NO. 08 / 23:47</b></div>
+
+        <h1 class="game-title">袋走计划<span>。</span></h1>
+        <div class="title-en"><em>BAG HEIST</em><span>a midnight moving job</span></div>
+
+        <p class="lede">午夜 23:47，八间寝室，四十八个不能被秦姨看见的包。<br>把它们按颜色丢进中央分拣桶，在天亮前清空整栋楼。</p>
+
+        <div class="brief-list">
+          <div class="brief-row">
+            <b>01</b>
+            <div><strong>捡包 · 触效果</strong><span>走进寝室，靠近书包会自动拾取。每个包都会立刻触发一个随机效果。</span></div>
+          </div>
+          <div class="brief-row">
+            <b>02</b>
+            <div><strong>同色 · 才归位</strong><span>左上角是你的携袋上限。把包带到中央，找到同样颜色和编号的桶。</span></div>
+          </div>
+          <div class="brief-row">
+            <b>03</b>
+            <div><strong>抢仇恨 · 救队友</strong><span>秦姨一次只锁一个人。她抓住人后，捡起发光的铃铛包抢走仇恨，就能救下队友。</span></div>
+          </div>
+        </div>
+
+        <div class="menu-note-row">
+          <div class="record-card">
+            <span>历史最佳</span>
+            <strong id="best-line">还没有记录</strong>
+          </div>
+          <div class="record-card">
+            <span>本局编制</span>
+            <strong>8 名学生 · 1 名监管者</strong>
+          </div>
+        </div>
+
+        <div class="menu-foot">
+          <span class="ink-dot"></span>
+          单机：你 + 7 名 AI；联机：2–4 人 + AI 补位
+        </div>
+      </div>
+
+      <div class="menu-right">
+        <div class="picker-head">
+          <div><span>挑一个学生</span><small>CHOOSE YOUR RUNNER</small></div>
+          <span class="picker-count">8 选 1</span>
+        </div>
+
+        <div id="char-grid" class="char-grid"></div>
+
+        <div id="selected-note" class="selected-note">
+          <span class="note-stamp" id="note-stamp">疾</span>
+          <div><strong id="note-name">阿疾 · 疾风</strong><p id="note-desc">移动速度 +15%。适合喜欢满场乱跑、抢包又抢桶的人。</p></div>
+        </div>
+
+        <button id="start-btn" class="start-btn" type="button">
+          <span>开始搬迁</span><b>→</b>
+        </button>
+
+        <button id="mp-open" class="mp-open" type="button">
+          <span>联机合作</span><b>2–4 人 · 房间码</b>
+        </button>
+
+        <div class="controls-line">
+          <kbd>WASD</kbd> 移动 <kbd>SHIFT</kbd> 冲刺 <kbd>空格</kbd> 投袋 <kbd>P</kbd> 暂停
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= ONLINE LOBBY ======================= -->
+  <section id="mp-lobby" class="screen hidden">
+    <div class="modal-card mp-card">
+      <div class="eyebrow">CO-OP / 2–4 名学生</div>
+      <h2>今晚，一起搬。</h2>
+      <p class="modal-sub">房主保持页面打开并留在前台；其他人用房间码加入。人不够，AI 补位。</p>
+
+      <div id="mp-setup">
+        <label class="mp-field">
+          <span>你的名字</span>
+          <input id="mp-name" maxlength="8" placeholder="同学" autocomplete="off">
+        </label>
+        <button id="mp-create" class="primary-btn" type="button">创建房间</button>
+        <div class="mp-join-row">
+          <input id="mp-code" maxlength="4" placeholder="房间码" autocomplete="off" spellcheck="false">
+          <button id="mp-join" class="ghost-btn" type="button">加入房间</button>
+        </div>
+        <p id="mp-error" class="mp-error"></p>
+      </div>
+
+      <div id="mp-room" class="hidden">
+        <div class="mp-code-row">
+          <span>房间码</span>
+          <strong id="mp-room-code">----</strong>
+          <small>把这四个字符发给朋友</small>
+        </div>
+        <div id="mp-players" class="mp-players"></div>
+        <p id="mp-hint" class="mp-hint">等待房主开始…</p>
+        <div class="modal-actions">
+          <button id="mp-start" class="primary-btn hidden" type="button">开始搬迁</button>
+          <button id="mp-leave" class="ghost-btn" type="button">离开房间</button>
+        </div>
+      </div>
+
+      <button id="mp-close" class="mp-close" type="button">返回单机</button>
+    </div>
+  </section>
+
+  <!-- ======================= PAUSE ======================= -->
+  <section id="pause" class="screen hidden">
+    <div class="modal-card pause-card">
+      <div class="eyebrow">PAUSED / 先喘口气</div>
+      <h2>秦姨也在等。</h2>
+      <p class="modal-sub">她只是不知道你躲在哪里。</p>
+      <div class="modal-actions">
+        <button id="resume-btn" class="primary-btn" type="button">继续搬迁</button>
+        <button id="restart-pause" class="ghost-btn" type="button">重新开始</button>
+        <button id="quit-btn" class="ghost-btn" type="button">回到选人页</button>
+      </div>
+      <div class="pause-tips">
+        <span><b>WASD</b> 移动</span><span><b>SHIFT</b> 冲刺</span><span><b>空格</b> 投袋</span><span><b>P</b> 暂停</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= HELP ======================= -->
+  <section id="help" class="screen hidden">
+    <div class="modal-card help-card">
+      <div class="eyebrow">HOW TO PLAY / 值班手册</div>
+      <h2>今晚只做三件事。</h2>
+      <div class="help-grid">
+        <div class="help-block"><b>01</b><h3>捡包</h3><p>走进八间寝室，靠近书包会自动拾取。每捡一个包，立即触发一个书包效果：顺风、隐身、时停、护盾、双倍、诱饵、传送，或者把秦姨引到你身上。</p></div>
+        <div class="help-block"><b>02</b><h3>归位</h3><p>把包带到中央分拣厅，站到同色、同编号的桶边，按空格或点「投」把包扔进去。团队要在天亮前归位全部 48 个包。</p></div>
+        <div class="help-block"><b>03</b><h3>救人</h3><p>秦姨只锁一个人，抓住后会把人按在原地 14 秒。其他人捡起发光的铃铛包，就能触发「抢仇恨」，把她引向自己，救下队友。</p></div>
+      </div>
+      <div class="help-tip"><b>体能提示</b>你有 3 颗心，被按满 14 秒会掉一颗心。冲刺键默认 SHIFT，冷却好了就用。<br><b>分工</b>AI 队友每人只负责 6 个包，剩下的要活人收尾。联机时房主保持页面在前台，房间才稳定。</div>
+      <button id="help-close" class="primary-btn" type="button">记住了</button>
+    </div>
+  </section>
+
+  <!-- ======================= RESULT ======================= -->
+  <section id="result" class="screen hidden">
+    <div class="modal-card result-card">
+      <div id="result-stamp" class="result-stamp">清空成功</div>
+      <div class="result-head">
+        <div class="result-copy">
+          <div class="eyebrow" id="result-eyebrow">SHIFT COMPLETE / 05:58</div>
+          <h2 id="result-title">全部归位，天还没亮。</h2>
+          <p id="result-sub">八个人，四十八个包，一个都没留给秦姨。</p>
+        </div>
+        <div class="rank-seal">
+          <span>你的排名</span>
+          <strong id="result-rank">#1</strong>
+          <small>/ 8</small>
+        </div>
+      </div>
+
+      <div class="result-stats" id="result-stats"></div>
+      <div class="result-table-wrap">
+        <div class="table-head"><span>本班排名</span><span>归位</span><span>分数</span></div>
+        <div id="result-table" class="result-table"></div>
+      </div>
+      <div class="result-actions">
+        <button id="again-btn" class="primary-btn" type="button">再来一局</button>
+        <button id="change-btn" class="ghost-btn" type="button">换个角色</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast-layer" class="toast-layer"></div>
+
+  <div id="rotate-hint" class="rotate-hint hidden">
+    <div class="rotate-icon">↻</div>
+    <strong>把手机横过来</strong>
+    <span>横屏才是分拣大厅的正确打开方式</span>
+    <button id="rotate-dismiss" type="button">仍然竖屏游玩</button>
+  </div>
+</div>
+<script>/*__PEER__*/</script>
+<script>/*__GAME__*/</script>
+</body>
+</html>
