@@ -264,8 +264,13 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     group: null,
     mode: 'patrol',
     angle: 0,
+    facing: 0,
+    phase: 0,
+    walk: 0,
+    speed: 0,
     grace: 6,
-    shadow: null
+    shadow: null,
+    rig: null
   };
 
   let state = 'menu'; // menu | playing | paused | caught | result
@@ -542,37 +547,101 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   function buildWarden() {
     const g = new THREE.Group();
-    const coat = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.52, 1.2, 10),
-      new THREE.MeshStandardMaterial({ color: 0x201b1a, roughness: 0.93 }));
-    coat.position.y = 0.8; g.add(coat);
+    const torso = new THREE.Group();
+    g.add(torso);
+
+    const coatMat = new THREE.MeshStandardMaterial({ color: 0x2a2320, roughness: 0.93 });
+    const coat = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 0.86, 10), coatMat);
+    coat.position.y = 0.97;
+    torso.add(coat);
+    const hem = new THREE.Mesh(new THREE.CylinderGeometry(0.49, 0.53, 0.1, 10),
+      new THREE.MeshStandardMaterial({ color: 0x1d1816, roughness: 0.98 }));
+    hem.position.y = 0.54;
+    torso.add(hem);
+
     const shoulders = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.22, 0.42),
       new THREE.MeshStandardMaterial({ color: 0x151212, roughness: 0.95 }));
-    shoulders.position.y = 1.38; g.add(shoulders);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 10),
-      new THREE.MeshStandardMaterial({ color: 0xc9a583, roughness: 0.85 }));
-    head.position.y = 1.72; g.add(head);
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 8, 0, TAU, 0, Math.PI * 0.55),
+    shoulders.position.y = 1.38;
+    torso.add(shoulders);
+
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xc9a583, roughness: 0.85 });
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 12), skinMat);
+    head.position.y = 1.72;
+    torso.add(head);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.11, 0.16, 8), skinMat);
+    neck.position.y = 1.53;
+    torso.add(neck);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.27, 14, 9, 0, TAU, 0, Math.PI * 0.55),
       new THREE.MeshStandardMaterial({ color: 0x1b1715, roughness: 1 }));
-    hair.position.y = 1.78; g.add(hair);
+    hair.position.y = 1.78;
+    torso.add(hair);
     for (const sx of [-0.09, 0.09]) {
       const eye = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 6),
         new THREE.MeshBasicMaterial({ color: 0xff5a3d }));
-      eye.position.set(sx, 1.74, 0.225); g.add(eye);
+      eye.position.set(sx, 1.74, 0.225);
+      torso.add(eye);
     }
-    for (const sx of [-0.5, 0.5]) {
-      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.9, 8),
-        new THREE.MeshStandardMaterial({ color: 0x221c1a, roughness: 1 }));
-      arm.position.set(sx, 0.95, 0); arm.rotation.z = sx > 0 ? -0.12 : 0.12; g.add(arm);
+
+    const armMat = new THREE.MeshStandardMaterial({ color: 0x221c1a, roughness: 1 });
+    const arms = {};
+    for (const sign of [-1, 1]) {
+      const pivot = new THREE.Group();
+      pivot.position.set(sign * 0.49, 1.33, 0);
+      torso.add(pivot);
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.115, 0.72, 8), armMat);
+      arm.position.y = -0.36;
+      pivot.add(arm);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.095, 8, 6), skinMat);
+      hand.position.y = -0.73;
+      pivot.add(hand);
+      pivot.rotation.z = sign > 0 ? -0.08 : 0.08;
+      arms[sign > 0 ? 'armR' : 'armL'] = pivot;
     }
+
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x3b2d26, roughness: 1 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x120e0c, roughness: 0.8 });
+    const legs = {};
+    for (const sign of [-1, 1]) {
+      const hip = new THREE.Group();
+      hip.position.set(sign * 0.17, 0.72, 0);
+      g.add(hip);
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.11, 0.34, 8), legMat);
+      thigh.position.y = -0.17;
+      hip.add(thigh);
+      const knee = new THREE.Group();
+      knee.position.y = -0.34;
+      hip.add(knee);
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.095, 0.28, 8), legMat);
+      shin.position.y = -0.14;
+      knee.add(shin);
+      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), shoeMat);
+      shoe.position.set(0, -0.31, 0.07);
+      knee.add(shoe);
+      const key = sign > 0 ? 'R' : 'L';
+      legs['leg' + key] = hip;
+      legs['knee' + key] = knee;
+    }
+
     const lamp = new THREE.PointLight(0xff5638, 2.4, 4.5, 2);
-    lamp.position.set(0, 1.4, 0.25); g.add(lamp);
+    lamp.position.set(0, 1.4, 0.25);
+    torso.add(lamp);
+
     const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.48, 20),
       new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3, depthWrite: false }));
-    shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.022; g.add(shadow);
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.y = 0.022;
+    g.add(shadow);
+
     g.position.set(0, 0, 0);
     scene.add(g);
     warden.group = g;
     warden.shadow = shadow;
+    warden.rig = {
+      torso, head,
+      armL: arms.armL, armR: arms.armR,
+      legL: legs.legL, legR: legs.legR,
+      kneeL: legs.kneeL, kneeR: legs.kneeR
+    };
   }
 
   /* ---------------- bags ---------------- */
@@ -878,12 +947,60 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   /* ---------------- warden ---------------- */
 
+  function turnAngle(current, target, rate) {
+    const diff = Math.atan2(Math.sin(target - current), Math.cos(target - current));
+    return current + diff * Math.min(1, rate);
+  }
+
+  function animateWarden(dt, moving, speed) {
+    const rig = warden.rig;
+    if (!rig) return;
+    const want = moving ? 1 : 0;
+    warden.walk += (want - warden.walk) * Math.min(1, dt * 9);
+    if (moving) warden.phase += dt * (3.7 * speed + 2.2);
+    else warden.phase += dt * 0.8;
+
+    const stride = Math.sin(warden.phase);
+    const swing = stride * warden.walk;
+    const amp = warden.mode === 'chase' ? 0.78 : 0.52;
+    rig.legL.rotation.x = swing * amp;
+    rig.legR.rotation.x = -swing * amp;
+    rig.kneeL.rotation.x = Math.max(0, stride) * 0.95 * warden.walk;
+    rig.kneeR.rotation.x = Math.max(0, -stride) * 0.95 * warden.walk;
+    rig.armL.rotation.x = -swing * amp * 0.82;
+    rig.armR.rotation.x = swing * amp * 0.82;
+    rig.armL.rotation.z = 0.09 + Math.sin(warden.phase * 2) * 0.02 * warden.walk;
+    rig.armR.rotation.z = -0.09 - Math.sin(warden.phase * 2) * 0.02 * warden.walk;
+    rig.torso.position.y = Math.abs(stride) * 0.034 * warden.walk
+      + Math.sin(elapsed * 1.7) * 0.006 * (1 - warden.walk);
+    rig.torso.rotation.z = stride * 0.028 * warden.walk;
+    rig.torso.rotation.x = 0.08 * warden.walk + Math.sin(warden.phase * 2) * 0.012 * warden.walk;
+    rig.head.rotation.z = -rig.torso.rotation.z * 0.75;
+    rig.head.rotation.x = -rig.torso.rotation.x * 0.55;
+  }
+
   function resetWarden() {
     warden.pos.set(0, 0, 0);
     warden.group.position.set(0, 0, 0);
     warden.angle = 0;
+    warden.facing = 0;
+    warden.phase = 0;
+    warden.walk = 0;
+    warden.speed = 0;
     warden.mode = 'patrol';
     warden.grace = 6;
+    warden.group.rotation.y = 0;
+    if (warden.rig) {
+      warden.rig.torso.position.y = 0;
+      warden.rig.torso.rotation.set(0, 0, 0);
+      warden.rig.armL.rotation.set(0, 0, 0.08);
+      warden.rig.armR.rotation.set(0, 0, -0.08);
+      warden.rig.legL.rotation.set(0, 0, 0);
+      warden.rig.legR.rotation.set(0, 0, 0);
+      warden.rig.kneeL.rotation.set(0, 0, 0);
+      warden.rig.kneeR.rotation.set(0, 0, 0);
+      warden.rig.head.rotation.set(0, 0, 0);
+    }
   }
 
   function capturePlayer() {
@@ -901,9 +1018,14 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   }
 
   function updateWarden(dt) {
+    if (!warden.group) return;
     if (warden.grace > 0) {
       warden.grace -= dt;
-      warden.group.rotation.y += dt * 0.4;
+      warden.speed += (0 - warden.speed) * Math.min(1, dt * 6);
+      warden.facing = turnAngle(warden.facing,
+        Math.atan2(player.pos.x - warden.pos.x, player.pos.z - warden.pos.z), dt * 2.4);
+      warden.group.rotation.y = warden.facing;
+      animateWarden(dt, false, 0);
       return;
     }
     const inHall = player.pos.x > -9 && player.pos.x < 9 && player.pos.z > -8 && player.pos.z < 8;
@@ -922,12 +1044,22 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     }
     const dx = tx - warden.pos.x, dz = tz - warden.pos.z;
     const d = Math.hypot(dx, dz);
-    if (d > 0.02) {
-      warden.pos.x += dx / d * speed * dt;
-      warden.pos.z += dz / d * speed * dt;
+    warden.speed += (speed - warden.speed) * Math.min(1, dt * 4.8);
+    const step = Math.min(d, warden.speed * dt);
+    if (step > 0.0004) {
+      warden.pos.x += dx / d * step;
+      warden.pos.z += dz / d * step;
+    }
+
+    const faceX = warden.mode === 'chase' ? player.pos.x - warden.pos.x : dx;
+    const faceZ = warden.mode === 'chase' ? player.pos.z - warden.pos.z : dz;
+    if (Math.hypot(faceX, faceZ) > 0.04) {
+      const rate = warden.mode === 'chase' ? 7.5 : 5;
+      warden.facing = turnAngle(warden.facing, Math.atan2(faceX, faceZ), dt * rate);
     }
     warden.group.position.set(warden.pos.x, 0, warden.pos.z);
-    warden.group.rotation.y = Math.atan2(player.pos.x - warden.pos.x, player.pos.z - warden.pos.z) + Math.PI;
+    warden.group.rotation.y = warden.facing;
+    animateWarden(dt, step > 0.0004, warden.speed);
     if (pd < 1.08 && warden.mode === 'chase') capturePlayer();
   }
 
