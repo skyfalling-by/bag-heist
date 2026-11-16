@@ -9,6 +9,12 @@ https://skyfalling-by.github.io/bag-heist/
 - 单机：你 + 7 名 AI 学生 + 1 名 AI 监管者。
 - 联机：2–4 名真人，房间码加入，其余位置由 AI 补足；房主保持页面在前台。
 
+## 第一人称原型
+
+https://skyfalling-by.github.io/bag-heist/first-person/
+
+单机 3D 试玩版：走进八间寝室找包，用鼠标看、WASD 走、E 拾取/投袋。目前是电脑鼠标版，暂未接入联机。
+
 ## 本地开发
 
 ```bash
