@@ -118,6 +118,50 @@ button.ghost:hover{background:rgba(42,34,24,.08)}
   .rule-row{font-size:11px}
 }
 
+/* ---------------- touch / mobile ---------------- */
+.touch-only{display:none!important}
+body.touch .touch-only{display:block!important}
+body.touch .desktop-only{display:none!important}
+body.touch{overscroll-behavior:none;touch-action:none}
+body.touch #scene{touch-action:none}
+body.touch .rule-row.touch-only{display:flex!important}
+body.touch .fp-card{max-height:90vh;overflow:auto}
+body.touch .fp-top{padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));gap:8px;align-items:center}
+body.touch .fp-brand b{font-size:18px}
+body.touch .fp-brand span{display:none}
+body.touch .fp-clock{min-width:128px;padding:5px 9px}
+body.touch .fp-clock b{font-size:22px}
+body.touch .fp-stat{min-width:92px;padding:6px 8px}
+body.touch .fp-stat b{font-size:16px}
+body.touch #room-label{left:12px;top:70px;font-size:11px}
+body.touch #objective{right:12px;top:70px;font-size:10px;max-width:160px}
+body.touch #carry-row{left:calc(15px + 122px);bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+body.touch #hearts{left:calc(15px + 122px);bottom:calc(70px + env(safe-area-inset-bottom,0px));font-size:17px}
+body.touch #prompt{bottom:118px;max-width:calc(100vw - 48px);white-space:normal;text-align:center;font-size:12px}
+
+#touch-ui{position:absolute;inset:0;pointer-events:none;z-index:12}
+#joy{position:absolute;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:112px;height:112px;border-radius:50%;border:1px solid rgba(242,234,217,.34);background:radial-gradient(circle at 35% 30%,rgba(242,234,217,.18),rgba(12,11,9,.36));box-shadow:inset 0 0 28px rgba(0,0,0,.24),0 8px 24px rgba(0,0,0,.22);pointer-events:auto;touch-action:none;backdrop-filter:blur(3px)}
+#joy:after{content:"";position:absolute;inset:18px;border-radius:50%;border:1px dashed rgba(242,234,217,.14)}
+#joy-knob{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;border:1px solid rgba(242,234,217,.48);background:rgba(242,234,217,.28);box-shadow:0 2px 8px rgba(0,0,0,.35);transform:translate(-50%,-50%)}
+.touch-control{display:none;pointer-events:auto;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;white-space:nowrap;padding:0;line-height:1}
+body.touch .touch-control{display:grid}
+#touch-action,#touch-sprint{position:absolute;bottom:calc(18px + env(safe-area-inset-bottom,0px));border-radius:50%;place-items:center;color:#f8efdc;border:1px solid rgba(242,234,217,.44);background:rgba(17,14,11,.7);box-shadow:0 6px 20px rgba(0,0,0,.3);backdrop-filter:blur(4px);font-size:14px;letter-spacing:.08em;transition:transform .08s ease,background .08s ease}
+#touch-action{right:calc(18px + env(safe-area-inset-right,0px));width:78px;height:78px;font-size:15px;background:rgba(196,70,48,.78);border-color:rgba(255,220,190,.62)}
+#touch-sprint{right:calc(108px + env(safe-area-inset-right,0px));width:62px;height:62px;font-size:13px}
+#touch-action.active,#touch-sprint.active{transform:scale(.94);background:rgba(242,234,217,.9);color:var(--ink)}
+#touch-pause{width:40px;height:40px;padding:0;border-radius:50%;place-items:center;color:#f6eddb;border:1px solid rgba(242,234,217,.34);background:rgba(14,12,9,.56);font:700 15px/1 ui-monospace,Consolas,monospace;backdrop-filter:blur(5px)}
+body.touch #touch-pause{display:grid}
+#mobile-rotate{position:absolute;left:50%;top:calc(76px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:15;padding:5px 12px;border:1px solid rgba(242,234,217,.24);background:rgba(14,12,9,.56);color:#e5d4b9;font-size:11px;letter-spacing:.12em;pointer-events:none;white-space:nowrap}
+@media (orientation:landscape){#mobile-rotate{display:none!important}}
+@media (orientation:portrait){
+  body.touch .fp-card h1{font-size:29px;white-space:normal;letter-spacing:0}
+  body.touch .fp-brand{display:none}
+  body.touch .fp-clock{min-width:118px}
+  body.touch .fp-stat{min-width:82px}
+  #touch-action{width:70px;height:70px}
+  #touch-sprint{width:56px;height:56px;right:calc(96px + env(safe-area-inset-right,0px))}
+}
+
 
 </style>
 </head>
@@ -130,6 +174,7 @@ button.ghost:hover{background:rgba(42,34,24,.08)}
       <div class="fp-brand"><b>袋走计划</b><span>FIRST-PERSON TEST</span></div>
       <div class="fp-clock"><span>天亮倒计时</span><b id="clock">05:00</b></div>
       <div class="fp-stat"><span>已归位</span><b><i id="sorted">0</i> / 48</b></div>
+      <button id="touch-pause" class="touch-control" aria-label="暂停">Ⅱ</button>
     </div>
     <div id="room-label">中央分拣厅</div>
     <div id="objective">把包按颜色投进同号桶</div>
@@ -139,6 +184,12 @@ button.ghost:hover{background:rgba(42,34,24,.08)}
     <div id="hearts"></div>
     <div id="toast-layer"></div>
     <div id="danger-vignette"></div>
+    <div id="mobile-rotate" class="touch-only">建议横屏游玩</div>
+    <div id="touch-ui" class="touch-only">
+      <div id="joy"><div id="joy-knob"></div></div>
+      <button id="touch-sprint" class="touch-control" aria-label="冲刺">冲刺</button>
+      <button id="touch-action" class="touch-control" aria-label="拾取或投袋">拾取</button>
+    </div>
   </div>
 
   <div id="start" class="fp-overlay">
@@ -146,9 +197,11 @@ button.ghost:hover{background:rgba(42,34,24,.08)}
       <div class="eyebrow">NIGHT SHIFT / 3D PROTOTYPE</div>
       <h1>袋走计划<span>·</span>第一人称</h1>
       <p class="lede">八间寝室，四十八个书包。用眼睛找包，用肩膀撞开门，把包按颜色和编号投进中央分拣厅的桶里。秦姨今晚也在楼里。</p>
-      <div class="rule-row"><b>WASD</b> 移动 <b>鼠标</b> 看 <b>SHIFT</b> 冲刺 <b>E</b> 拾取 / 投袋</div>
+      <div class="rule-row desktop-only"><b>WASD</b> 移动 <b>鼠标</b> 看 <b>SHIFT</b> 冲刺 <b>E</b> 拾取 / 投袋</div>
+      <div class="rule-row touch-only">左下摇杆移动 · 右侧拖动看 · 右下按钮拾取 / 冲刺</div>
       <button id="enter">进入宿舍楼</button>
-      <div class="tiny">建议使用电脑 + 鼠标；这是第一人称单机原型，暂未接入联机。</div>
+      <div class="tiny desktop-only">建议使用电脑 + 鼠标；这是第一人称单机原型，暂未接入联机。</div>
+      <div class="tiny touch-only">手机请横屏游玩；3D 比较吃性能，卡的话关掉其他应用。</div>
     </div>
   </div>
 
@@ -208,16 +261,25 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const TAU = Math.PI * 2;
 
+  const IS_TOUCH = (() => {
+    try {
+      if (new URLSearchParams(location.search).get('touch') === '1') return true;
+      if (matchMedia('(pointer: coarse)').matches) return true;
+      return (navigator.maxTouchPoints || 0) > 0 || 'ontouchstart' in window;
+    } catch (e) { return false; }
+  })();
+  document.body.classList.toggle('touch', IS_TOUCH);
+
   const canvas = $('#scene');
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_TOUCH, powerPreference: 'high-performance' });
   } catch (e) {
     $('#unsupported').classList.remove('hidden');
     $('#start').classList.add('hidden');
     return;
   }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, IS_TOUCH ? 1.5 : 2));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -281,6 +343,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   let promptKey = '';
   let carryKey = '';
   let pointerHadLock = false;
+  const touchInput = {
+    joyId: null, joyX: 0, joyY: 0,
+    lookId: null, lookX: 0, lookY: 0,
+    sprint: false
+  };
 
   const ui = {
     hud: $('#hud'),
@@ -303,7 +370,13 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     resultEyebrow: $('#result-eyebrow'),
     resultSorted: $('#result-sorted'),
     resultTime: $('#result-time'),
-    resultCaught: $('#result-caught')
+    resultCaught: $('#result-caught'),
+    joy: $('#joy'),
+    joyKnob: $('#joy-knob'),
+    touchAction: $('#touch-action'),
+    touchSprint: $('#touch-sprint'),
+    touchPause: $('#touch-pause'),
+    mobileRotate: $('#mobile-rotate')
   };
 
   /* ---------------- textures ---------------- */
@@ -761,10 +834,11 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       promptKey = '';
       return;
     }
-    const key = text + (full ? '|f' : '') + (hot ? '|h' : '') + (showKey ? '' : '|n');
+    const useKey = showKey && !IS_TOUCH;
+    const key = text + (full ? '|f' : '') + (hot ? '|h' : '') + (useKey ? '' : '|n');
     if (key !== promptKey) {
       promptKey = key;
-      ui.prompt.innerHTML = (showKey ? '<kbd>E</kbd>' : '') + text;
+      ui.prompt.innerHTML = (useKey ? '<kbd>E</kbd>' : '') + text;
       ui.prompt.classList.remove('hidden');
       ui.prompt.classList.toggle('full', full);
       ui.crosshair.classList.toggle('hot', hot);
@@ -799,6 +873,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     for (let i = 0; i < 3; i++) hearts += `<i class="${i < player.hearts ? 'on' : ''}">●</i>`;
     ui.hearts.innerHTML = hearts;
     renderCarry();
+    if (IS_TOUCH && ui.touchAction) {
+      ui.touchAction.textContent = player.carrying.length && nearestBin(true) ? '投袋' : '拾取';
+    }
     const d = Math.hypot(player.pos.x - warden.pos.x, player.pos.z - warden.pos.z);
     const danger = state === 'playing' && warden.grace <= 0 && d < 5.2;
     ui.danger.classList.toggle('show', danger);
@@ -946,14 +1023,20 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   const keys = Object.create(null);
 
   function updatePlayer(dt) {
-    const forward = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
-    const strafe = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
-    const sprint = keys.ShiftLeft || keys.ShiftRight;
+    let forward = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
+    let strafe = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
+    if (touchInput.joyId !== null) {
+      forward += -touchInput.joyY;
+      strafe += touchInput.joyX;
+    }
+    forward = clamp(forward, -1, 1);
+    strafe = clamp(strafe, -1, 1);
+    const sprint = keys.ShiftLeft || keys.ShiftRight || touchInput.sprint;
     let speed = sprint ? 6.05 : 4.05;
     if (player.invuln > 0) player.invuln -= dt;
-    if (forward || strafe) {
-      const len = Math.hypot(forward, strafe);
-      const f = forward / len, s = strafe / len;
+    const mag = Math.hypot(forward, strafe);
+    if (mag > 0.03) {
+      const f = forward / Math.max(1, mag), s = strafe / Math.max(1, mag);
       const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw);
       const rx = Math.cos(player.yaw), rz = -Math.sin(player.yaw);
       tryMove((fx * f + rx * s) * speed * dt, (fz * f + rz * s) * speed * dt);
@@ -1031,6 +1114,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     state = 'caught';
     caughtTimer = 2.6;
     caughtCount++;
+    resetTouchInput();
     player.hearts = Math.max(0, player.hearts - 1);
     dropCarried();
     ui.capture.classList.remove('hidden');
@@ -1131,6 +1215,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   }
 
   function requestLock() {
+    if (IS_TOUCH) return;
     if (document.pointerLockElement === canvas) return;
     try {
       const p = canvas.requestPointerLock();
@@ -1138,8 +1223,20 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     } catch (e) { /* headless / unsupported */ }
   }
 
+  function resetTouchInput() {
+    touchInput.joyId = null;
+    touchInput.joyX = 0;
+    touchInput.joyY = 0;
+    touchInput.lookId = null;
+    touchInput.sprint = false;
+    if (ui.joyKnob) ui.joyKnob.style.transform = 'translate(-50%,-50%)';
+    if (ui.touchAction) ui.touchAction.classList.remove('active');
+    if (ui.touchSprint) ui.touchSprint.classList.remove('active');
+  }
+
   function startGame() {
     resetRound();
+    resetTouchInput();
     state = 'playing';
     ui.start.classList.add('hidden');
     ui.result.classList.add('hidden');
@@ -1148,13 +1245,14 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     ui.hud.classList.remove('hidden');
     pointerHadLock = false;
     requestLock();
-    toast('48 个包，5 分钟。按 E 拾取 / 投袋。', 'gold');
+    toast(IS_TOUCH ? '左下摇杆移动，右侧拖动看，右下按钮拾取 / 冲刺。' : '48 个包，5 分钟。按 E 拾取 / 投袋。', 'gold');
     setTimeout(() => { if (state === 'playing') toast('秦姨 6 秒后开始巡楼。', ''); }, 650);
   }
 
   function finish(win, reason) {
     if (state === 'result') return;
     state = 'result';
+    resetTouchInput();
     if (document.pointerLockElement === canvas) document.exitPointerLock();
     ui.hud.classList.add('hidden');
     ui.capture.classList.add('hidden');
@@ -1182,6 +1280,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   function pauseGame() {
     if (state !== 'playing') return;
     state = 'paused';
+    resetTouchInput();
     ui.pause.classList.remove('hidden');
     if (document.pointerLockElement === canvas) document.exitPointerLock();
   }
@@ -1195,6 +1294,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   function backToMenu() {
     state = 'menu';
+    resetTouchInput();
     ui.hud.classList.add('hidden');
     ui.start.classList.remove('hidden');
     ui.pause.classList.add('hidden');
@@ -1226,16 +1326,17 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   addEventListener('keyup', e => { keys[e.code] = false; });
 
   canvas.addEventListener('click', () => {
-    if (state === 'playing' && document.pointerLockElement !== canvas) requestLock();
+    if (!IS_TOUCH && state === 'playing' && document.pointerLockElement !== canvas) requestLock();
   });
 
   addEventListener('mousemove', e => {
-    if (document.pointerLockElement !== canvas || state !== 'playing') return;
+    if (IS_TOUCH || document.pointerLockElement !== canvas || state !== 'playing') return;
     player.yaw -= e.movementX * 0.0022;
     player.pitch = clamp(player.pitch - e.movementY * 0.0022, -1.35, 1.35);
   });
 
   document.addEventListener('pointerlockchange', () => {
+    if (IS_TOUCH) return;
     if (document.pointerLockElement === canvas) {
       pointerHadLock = true;
     } else if (pointerHadLock && state === 'playing') {
@@ -1244,18 +1345,119 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     }
   });
 
-  $('#enter').addEventListener('click', startGame);
-  $('#resume').addEventListener('click', resumeGame);
-  $('#quit').addEventListener('click', backToMenu);
-  $('#again').addEventListener('click', startGame);
-  $('#back').addEventListener('click', backToMenu);
+  function updateJoy(x, y) {
+    if (!ui.joy) return;
+    const r = ui.joy.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const max = Math.max(28, r.width * 0.32);
+    let dx = x - cx;
+    let dy = y - cy;
+    const d = Math.hypot(dx, dy);
+    if (d > max) { dx *= max / d; dy *= max / d; }
+    touchInput.joyX = dx / max;
+    touchInput.joyY = dy / max;
+    if (ui.joyKnob) ui.joyKnob.style.transform = `translate(-50%,-50%) translate(${dx}px,${dy}px)`;
+  }
+
+  function releaseTouch(e) {
+    for (const t of e.changedTouches) {
+      if (t.identifier === touchInput.joyId) {
+        touchInput.joyId = null;
+        touchInput.joyX = 0;
+        touchInput.joyY = 0;
+        if (ui.joyKnob) ui.joyKnob.style.transform = 'translate(-50%,-50%)';
+      }
+      if (t.identifier === touchInput.lookId) touchInput.lookId = null;
+    }
+  }
+
+  if (IS_TOUCH && ui.joy) {
+    ui.joy.addEventListener('touchstart', e => {
+      if (state !== 'playing') return;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      touchInput.joyId = t.identifier;
+      updateJoy(t.clientX, t.clientY);
+      e.preventDefault();
+      e.stopPropagation();
+    }, { passive: false });
+
+    addEventListener('touchmove', e => {
+      if (state !== 'playing') return;
+      let handled = false;
+      for (const t of e.changedTouches) {
+        if (t.identifier === touchInput.joyId) {
+          updateJoy(t.clientX, t.clientY);
+          handled = true;
+        } else if (t.identifier === touchInput.lookId) {
+          const dx = t.clientX - touchInput.lookX;
+          const dy = t.clientY - touchInput.lookY;
+          touchInput.lookX = t.clientX;
+          touchInput.lookY = t.clientY;
+          player.yaw -= dx * 0.0045;
+          player.pitch = clamp(player.pitch - dy * 0.0045, -1.35, 1.35);
+          handled = true;
+        }
+      }
+      if (handled) e.preventDefault();
+    }, { passive: false });
+
+    addEventListener('touchstart', e => {
+      if (state !== 'playing' || touchInput.lookId !== null) return;
+      const t = e.changedTouches[0];
+      if (!t || (t.target && t.target.closest && t.target.closest('button'))) return;
+      touchInput.lookId = t.identifier;
+      touchInput.lookX = t.clientX;
+      touchInput.lookY = t.clientY;
+      e.preventDefault();
+    }, { passive: false });
+
+    addEventListener('touchend', releaseTouch, { passive: false });
+    addEventListener('touchcancel', releaseTouch, { passive: false });
+
+    const hold = (el, down, up) => {
+      el.addEventListener('touchstart', e => {
+        if (state !== 'playing') return;
+        e.preventDefault();
+        e.stopPropagation();
+        el.classList.add('active');
+        down();
+      }, { passive: false });
+      const release = e => {
+        el.classList.remove('active');
+        if (up) up();
+        e.preventDefault();
+      };
+      el.addEventListener('touchend', release, { passive: false });
+      el.addEventListener('touchcancel', release, { passive: false });
+    };
+    hold(ui.touchAction, () => interact(), null);
+    hold(ui.touchSprint, () => { touchInput.sprint = true; }, () => { touchInput.sprint = false; });
+    if (ui.touchPause) {
+      ui.touchPause.addEventListener('click', e => {
+        e.preventDefault();
+        if (state === 'playing') pauseGame();
+      });
+    }
+  }
 
   addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight, false);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, IS_TOUCH ? 1.5 : 2));
   });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && state === 'playing') pauseGame();
+  });
+
+  $('#enter').addEventListener('click', startGame);
+  $('#resume').addEventListener('click', resumeGame);
+  $('#quit').addEventListener('click', backToMenu);
+  $('#again').addEventListener('click', startGame);
+  $('#back').addEventListener('click', backToMenu);
 
   /* ---------------- loop ---------------- */
 
