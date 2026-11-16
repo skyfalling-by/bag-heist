@@ -519,9 +519,25 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       const label = labelSprite(String(roomId).padStart(2, '0') + ' ' + room.name,
         '#2a2118', '#f4e8d1', 0.58, 0.2, 1.72);
       group.add(label);
+      const beaconMat = new THREE.MeshBasicMaterial({
+        color: room.color, transparent: true, opacity: 0.7, depthWrite: false
+      });
+      const beacon = new THREE.Group();
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 0), beaconMat);
+      gem.position.y = 2.18;
+      beacon.add(gem);
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(0.84, 0.026, 6, 36), beaconMat);
+      halo.rotation.x = Math.PI / 2;
+      halo.position.y = 0.035;
+      beacon.add(halo);
+      beacon.visible = false;
+      group.add(beacon);
       scene.add(group);
       colliders.push({ x1: x - 0.74, x2: x + 0.74, z1: z - 0.74, z2: z + 0.74 });
-      bins.push({ room: roomId, name: room.name, color: room.color, x, z, group, fill, label, filled: 0, flash: 0 });
+      bins.push({
+        room: roomId, name: room.name, color: room.color, x, z,
+        group, fill, label, beacon, gem, halo, beaconMat, filled: 0, flash: 0
+      });
     });
 
     // hall rug / center decal
@@ -738,17 +754,17 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     return null;
   }
 
-  function setPrompt(text, full = false, hot = false) {
+  function setPrompt(text, full = false, hot = false, showKey = true) {
     if (!text) {
       ui.prompt.classList.add('hidden');
       ui.crosshair.classList.remove('hot');
       promptKey = '';
       return;
     }
-    const key = text + (full ? '|f' : '') + (hot ? '|h' : '');
+    const key = text + (full ? '|f' : '') + (hot ? '|h' : '') + (showKey ? '' : '|n');
     if (key !== promptKey) {
       promptKey = key;
-      ui.prompt.innerHTML = '<kbd>E</kbd>' + text;
+      ui.prompt.innerHTML = (showKey ? '<kbd>E</kbd>' : '') + text;
       ui.prompt.classList.remove('hidden');
       ui.prompt.classList.toggle('full', full);
       ui.crosshair.classList.toggle('hot', hot);
@@ -788,9 +804,10 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     ui.danger.classList.toggle('show', danger);
   }
 
-  function nearestBin() {
-    let best = null, bd = 2.35;
+  function nearestBin(matchOnly = false) {
+    let best = null, bd = 2.6;
     for (const b of bins) {
+      if (matchOnly && !player.carrying.some(x => x.room === b.room)) continue;
       const d = Math.hypot(player.pos.x - b.x, player.pos.z - b.z);
       if (d < bd) { bd = d; best = b; }
     }
@@ -809,21 +826,26 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   function updatePrompt() {
     if (state !== 'playing') { setPrompt(''); return; }
-    const bin = nearestBin();
-    const bag = nearestBag();
-    const matching = bin ? player.carrying.filter(b => b.room === bin.room) : [];
-    if (matching.length) {
-      setPrompt(`把 ${matching.length} 个 ${String(bin.room).padStart(2, '0')} ${bin.name}包 投进桶里`, false, true);
+    const matchBin = nearestBin(true);
+    if (matchBin) {
+      const matching = player.carrying.filter(b => b.room === matchBin.room);
+      setPrompt(`把 ${matching.length} 个 ${String(matchBin.room).padStart(2, '0')} ${matchBin.name}包 投进桶里`, false, true);
       return;
     }
+    const bag = nearestBag();
     if (bag) {
-      if (player.carrying.length >= 3) setPrompt('手里拿满了，先去中央投桶', true, false);
+      if (player.carrying.length >= 3) setPrompt('手里拿满了，先去中央投桶', true, false, false);
       else setPrompt(`拾取 ${String(bag.room).padStart(2, '0')} ${bag.name}包`, false, true);
       return;
     }
-    if (bin) {
-      if (!player.carrying.length) { setPrompt(''); return; }
-      setPrompt(`这是 ${String(bin.room).padStart(2, '0')} ${bin.name}桶，不是手里的颜色`, false, false);
+    const bin = nearestBin();
+    if (bin && player.carrying.length) {
+      setPrompt(`这是 ${String(bin.room).padStart(2, '0')} ${bin.name}桶，颜色不对；找闪光的同色桶`, false, false, false);
+      return;
+    }
+    if (player.carrying.length) {
+      const held = player.carrying.map(b => `${String(b.room).padStart(2, '0')} ${b.name}`).join('、');
+      setPrompt(`去中央找闪光的同色桶：${held}`, false, false, false);
       return;
     }
     setPrompt('');
@@ -887,9 +909,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   function interact() {
     if (state !== 'playing') return;
-    const bin = nearestBin();
-    if (bin && player.carrying.some(b => b.room === bin.room)) {
-      deposit(bin);
+    const matchBin = nearestBin(true);
+    if (matchBin) {
+      deposit(matchBin);
       return;
     }
     const bag = nearestBag();
@@ -897,8 +919,9 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       pickup(bag);
       return;
     }
+    const bin = nearestBin();
     if (bin) {
-      toast(`这是 ${String(bin.room).padStart(2, '0')} ${bin.name}桶，去找同色同号的包。`, '');
+      toast(`这是 ${String(bin.room).padStart(2, '0')} ${bin.name}桶，去找闪光的同色桶。`, '');
     }
   }
 
@@ -1301,6 +1324,17 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       }
       b.fill.scale.y = 0.45 + (b.filled / 6) * 2.1;
       b.fill.position.y = 0.9 + (b.filled / 6) * 0.1;
+      if (b.beacon) {
+        const hot = state === 'playing' && player.carrying.some(x => x.room === b.room);
+        b.beacon.visible = hot;
+        if (hot) {
+          b.beaconMat.opacity = 0.52 + 0.26 * Math.sin(elapsed * 5);
+          b.gem.rotation.y += dt * 2.4;
+          b.gem.position.y = 2.18 + Math.sin(elapsed * 3) * 0.09;
+          const s = 1 + Math.sin(elapsed * 3) * 0.045;
+          b.halo.scale.setScalar(s);
+        }
+      }
     }
 
     renderer.render(scene, camera);
