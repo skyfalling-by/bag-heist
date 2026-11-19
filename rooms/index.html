@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>四房大盗 · 抢包夜</title>
+<style>
+  :root{
+    --ink:#211d18; --paper:#f3ecda; --paper2:#e7ddc4;
+    --red:#b84a3d; --gold:#c99a45; --green:#4f7864; --muted:#8a7d68;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overflow:hidden;background:#14110e;color:var(--paper);font-family:"Microsoft YaHei","PingFang SC",sans-serif;}
+  body{user-select:none;-webkit-user-select:none;touch-action:none}
+  button{font-family:inherit;cursor:pointer}
+  #app{position:fixed;inset:0;overflow:hidden}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .hidden{display:none!important}
+  .screen{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,rgba(35,28,22,.38),rgba(8,7,6,.92) 70%);z-index:20;overflow:auto;padding:18px}
+  .sheet{width:min(640px,94vw);background:linear-gradient(145deg,#f7f0dd,#e9ddc3);color:var(--ink);border:1px solid #b9a98a;box-shadow:0 26px 80px rgba(0,0,0,.55);padding:30px 36px 26px;position:relative}
+  .sheet:before{content:"";position:absolute;inset:8px;border:1px solid rgba(120,98,66,.22);pointer-events:none}
+  .kicker{font:11px/1.4 "Courier New",monospace;letter-spacing:.22em;color:var(--muted);text-transform:uppercase}
+  h1{font-family:"STKaiti","KaiTi",serif;font-size:52px;line-height:1.12;margin:8px 0 4px;letter-spacing:.04em}
+  h1 em{font-style:normal;color:var(--red)}
+  .sub{color:#5d5040;font-size:13px;line-height:1.8;margin:0 0 14px}
+  .rule{display:grid;grid-template-columns:34px 1fr;gap:4px 10px;border-top:1px solid rgba(80,64,45,.22);border-bottom:1px solid rgba(80,64,45,.22);padding:12px 0;margin:12px 0}
+  .rule b{font:700 12px/1.6 "Courier New",monospace;color:var(--red)}
+  .rule span{font-size:12px;line-height:1.65;color:#4e4335}
+  .start-row{display:flex;gap:10px;margin-top:15px}
+  .start-btn{flex:1;border:1px solid #2e2820;background:#211d18;color:#f8eed8;padding:13px 10px;font-size:15px;letter-spacing:.08em;transition:.15s}
+  .start-btn:hover{background:#b84a3d;border-color:#b84a3d}
+  .start-btn.ghost{background:transparent;color:var(--ink);border-color:#9f8e74;flex:0 0 38%}
+  .start-btn.ghost:hover{background:#e2d4b9;border-color:#7d6c55}
+  .footnote{font-size:11px;color:#7b6c57;margin-top:14px;line-height:1.7}
+
+  #hud{position:absolute;inset:0;pointer-events:none;z-index:5;font-size:13px}
+  #topbar{position:absolute;left:20px;right:20px;top:16px;display:flex;align-items:flex-start;gap:14px}
+  #brand{background:rgba(241,233,214,.94);color:#211d18;border-left:4px solid #b84a3d;padding:9px 12px 8px;box-shadow:0 4px 18px rgba(0,0,0,.3)}
+  #brand b{display:block;font-family:"STKaiti","KaiTi",serif;font-size:24px;line-height:1}
+  #brand small{font:9px/1.4 "Courier New",monospace;letter-spacing:.2em;color:#75644c}
+  #clock-box{background:rgba(241,233,214,.94);color:#211d18;padding:7px 16px;min-width:126px;text-align:center;box-shadow:0 4px 18px rgba(0,0,0,.3)}
+  #clock-box small{display:block;font:9px/1.4 "Courier New",monospace;letter-spacing:.18em;color:#75644c}
+  #clock{font:700 27px/1.05 "Courier New",monospace;letter-spacing:.03em}
+  #floor-tag{align-self:center;background:rgba(24,20,16,.76);border:1px solid rgba(220,200,160,.45);padding:8px 12px;color:#f2e6cc;letter-spacing:.1em}
+  #pause{pointer-events:auto;margin-left:auto;width:38px;height:38px;border-radius:50%;border:1px solid rgba(240,225,195,.55);background:rgba(20,16,12,.6);color:#f4e8cf;font-size:14px}
+  #board{position:absolute;right:20px;top:72px;width:208px;background:rgba(24,20,16,.78);border:1px solid rgba(220,200,160,.24);padding:10px 11px;backdrop-filter:blur(3px)}
+  #board h3{margin:0 0 7px;font:10px/1.4 "Courier New",monospace;letter-spacing:.18em;color:#bba98a}
+  .score-row{display:grid;grid-template-columns:13px 1fr 25px 26px;align-items:center;gap:5px;padding:4px 0;border-top:1px dashed rgba(220,200,160,.15);font-size:12px}
+  .score-row:first-child{border-top:0}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .score-row.me{color:#ffd98f}
+  .score-row .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .score-row .pc{text-align:right;font:700 15px/1 "Courier New",monospace}
+  .score-row .cap{text-align:right;color:#a99b83;font-size:10px}
+  #feed{position:absolute;right:20px;top:268px;width:238px;display:flex;flex-direction:column;gap:5px}
+  .feed-item{background:rgba(246,238,220,.93);color:#2b241c;padding:6px 8px;font-size:11px;line-height:1.45;border-left:3px solid var(--c,#b84a3d);box-shadow:0 3px 10px rgba(0,0,0,.18)}
+  .feed-item b{font:10px/1 "Courier New",monospace;color:#9a8260;margin-right:5px}
+  #bottom{position:absolute;left:20px;bottom:16px;right:20px;display:flex;align-items:flex-end;gap:16px}
+  #player-card{background:rgba(241,233,214,.94);color:#211d18;padding:9px 12px;min-width:214px;box-shadow:0 5px 18px rgba(0,0,0,.3)}
+  #player-card .pc-top{display:flex;align-items:center;gap:7px}
+  #player-card .home-dot{width:12px;height:12px;border-radius:50%}
+  #player-card b{font-size:14px}
+  #player-card small{font:10px/1.3 "Courier New",monospace;color:#75644c;margin-left:auto}
+  #carry{display:flex;gap:4px;margin-top:6px;min-height:24px;flex-wrap:wrap}
+  .chip{font:10px/1 "Microsoft YaHei",sans-serif;background:#e6d9c0;border:1px solid #beae91;padding:5px 6px;border-radius:2px}
+  .chip.empty{opacity:.45;background:transparent;border-style:dashed}
+  #prompt-wrap{flex:1;display:flex;justify-content:center;pointer-events:none}
+  #prompt{background:rgba(24,20,16,.82);border:1px solid rgba(222,202,164,.4);color:#f2e8d4;padding:8px 14px;font-size:13px;line-height:1.5;max-width:560px;text-align:center;opacity:0;transition:.15s}
+  #prompt.on{opacity:1}
+  #prompt kbd{font:11px/1 "Courier New",monospace;background:#f7efdb;color:#211d18;padding:3px 5px;margin-right:6px;border-radius:2px}
+  #effects{position:absolute;left:20px;bottom:92px;display:flex;gap:6px;align-items:flex-end}
+  .fx-card{min-width:86px;background:rgba(246,238,220,.94);color:#2c251c;padding:7px 9px;border-top:3px solid #4f7864;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:auto;cursor:pointer;font-size:11px;line-height:1.35}
+  .fx-card b{display:block;font-size:12px}
+  .fx-card span{color:#7b6a53;font:10px/1.3 "Courier New",monospace}
+  .fx-card:hover{transform:translateY(-2px)}
+  .fx-empty{font-size:11px;color:#bba98a;background:rgba(20,16,12,.55);padding:6px 9px;border:1px dashed rgba(220,200,160,.3)}
+  #bottom-hint{position:absolute;left:0;right:0;bottom:2px;text-align:center;color:#a29178;font:10px/1.4 "Courier New",monospace;letter-spacing:.1em;opacity:.8}
+  #toast{position:absolute;top:112px;left:50%;transform:translate(-50%,-8px);background:#f5ecd7;color:#2b2318;padding:9px 18px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:10;border-left:4px solid var(--red);box-shadow:0 8px 26px rgba(0,0,0,.35)}
+  #toast.on{opacity:1;transform:translate(-50%,0)}
+  #paused{background:rgba(10,8,6,.68);z-index:15}
+  .pause-card{background:#f4ecd8;color:#211d18;padding:26px 32px;width:min(380px,90vw);text-align:center;border:1px solid #baa98c;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+  .pause-card h2{font-family:"STKaiti","KaiTi",serif;font-size:34px;margin:2px 0 4px}
+  .pause-card p{font-size:12px;color:#6e5f4b;margin:0 0 16px}
+  .pause-card button{display:block;width:100%;margin:7px 0;padding:10px;border:1px solid #2b241b;background:#211d18;color:#f5ecd8;font-size:14px}
+  .pause-card button.ghost{background:transparent;color:#211d18;border-color:#9e8d73}
+
+  #result .sheet{width:min(700px,94vw);padding:26px 32px 22px}
+  #result h2{font-family:"STKaiti","KaiTi",serif;font-size:40px;line-height:1.2;margin:6px 0 4px}
+  #result .result-sub{font-size:12px;color:#665845;line-height:1.7;margin-bottom:12px}
+  #stamp{position:absolute;right:30px;top:22px;border:2px solid var(--red);color:var(--red);padding:5px 10px;font-family:"STKaiti","KaiTi",serif;font-size:20px;transform:rotate(5deg)}
+  #rank{font:700 44px/1 "Courier New",monospace;color:var(--red);margin:0 0 3px}
+  .result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;border-top:1px solid #c8b99e;border-bottom:1px solid #c8b99e;padding:10px 0;margin:12px 0}
+  .stat small{display:block;font:10px/1.4 "Courier New",monospace;color:#84745c;letter-spacing:.1em}
+  .stat b{font:700 22px/1.2 "Courier New",monospace}
+  .board-head,.board-row{display:grid;grid-template-columns:34px 1fr 52px 58px 52px;gap:6px;align-items:center;padding:7px 8px;font-size:12px}
+  .board-head{font:9px/1.4 "Courier New",monospace;color:#83725a;border-bottom:1px solid #c8b99e;letter-spacing:.1em}
+  .board-row{border-bottom:1px dashed #d5c7ad}
+  .board-row.me{background:#efe1c3}
+  .board-row .rk{font:700 15px/1 "Courier New",monospace;color:#9c8b72;text-align:center}
+  .board-row .nm{display:flex;align-items:center;gap:6px;font-weight:700}
+  .board-row .nm i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .board-row .num{text-align:right;font:700 14px/1 "Courier New",monospace}
+  .board-row .cap{text-align:right;color:#7d6c56;font:10px/1.3 "Courier New",monospace}
+  .result-actions{display:flex;gap:9px;margin-top:16px}
+  .result-actions button{flex:1;padding:11px;border:1px solid #2c251c;background:#211d18;color:#f6edda;font-size:14px}
+  .result-actions button.ghost{background:transparent;color:#211d18;border-color:#9d8c72}
+  #mobile-hint{display:none;position:absolute;left:10px;right:10px;bottom:10px;background:rgba(20,16,12,.8);color:#e9dcc4;padding:7px;text-align:center;font-size:11px;z-index:12}
+  @media (max-width:760px){
+    h1{font-size:36px}.sheet{padding:24px 20px 20px}
+    #brand{padding:7px 9px}#brand b{font-size:19px}#clock{font-size:22px}
+    #board{display:none}#feed{display:none}#bottom{left:10px;right:10px;bottom:8px}
+    #player-card{min-width:0;flex:1}#prompt-wrap{display:none}#effects{bottom:78px;left:10px}
+    #mobile-hint{display:block}
+    .rule{grid-template-columns:26px 1fr}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="cv"></canvas>
+
+  <div id="menu" class="screen">
+    <div class="sheet">
+      <div class="kicker">FOUR ROOMS / NIGHT SHIFT / 2D TEST</div>
+      <h1>四房<em>大盗</em></h1>
+      <p class="sub">三层宿舍，二十一间房，六十三个包裹。别人房里的包，才是你的分数。<br>秦姨在走廊里巡夜，被她抓住，手里的东西会全掉在原地。</p>
+      <div class="rule">
+        <b>01</b><span>去陌生房间或对手房间找包，搬回自己房间自动入库。自己房间的包不能捡。</span>
+        <b>02</b><span>每个包拾取时触发随机效果。正面效果存起来，按 <b>1 / 2 / 3</b> 释放；负面效果立刻生效。</span>
+        <b>03</b><span>按房间里的包裹数排名。被秦姨抓住会掉光携带的包，并被丢到已发现的房间，不会淘汰。</span>
+        <b>04</b><span>1F 到地下室只有一处楼梯；1F 到 2F 有两处。靠近楼梯按 <b>E</b> 换层。</span>
+      </div>
+      <div class="start-row">
+        <button class="start-btn" id="start20">20 分钟标准局</button>
+        <button class="start-btn ghost" id="start3">3 分钟测试局</button>
+      </div>
+      <div class="footnote">WASD / 方向键移动 · E 拾取 / 上下楼 · 1–3 使用正面效果 · P 暂停<br>单机测试版：你 + 3 名 AI 对手 + 1 名 AI 监管者。</div>
+    </div>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div id="topbar">
+      <div id="brand"><b>四房大盗</b><small>FOUR ROOMS · 23:47</small></div>
+      <div id="clock-box"><small>天亮倒计时</small><div id="clock">20:00</div></div>
+      <div id="floor-tag">1F · 门厅</div>
+      <button id="pause" title="暂停">Ⅱ</button>
+    </div>
+    <div id="board"><h3>本场排名 / 入库数</h3><div id="board-rows"></div></div>
+    <div id="feed"></div>
+    <div id="toast"></div>
+    <div id="effects"></div>
+    <div id="bottom">
+      <div id="player-card">
+        <div class="pc-top"><span class="home-dot" id="home-dot"></span><b id="pc-name">你</b><small id="home-label">1F-01</small></div>
+        <div id="carry"></div>
+      </div>
+      <div id="prompt-wrap"><div id="prompt"></div></div>
+    </div>
+    <div id="bottom-hint">WASD 移动 · E 拾取 / 楼梯 · 1–3 正面效果 · P 暂停</div>
+  </div>
+
+  <div id="paused" class="screen hidden">
+    <div class="pause-card">
+      <div class="kicker">PAUSED / 暂停</div>
+      <h2>先喘口气。</h2>
+      <p>秦姨也在等你。</p>
+      <button id="resume">继续搬</button>
+      <button id="quit" class="ghost">回大厅</button>
+    </div>
+  </div>
+
+  <div id="result" class="screen hidden">
+    <div class="sheet">
+      <div id="stamp">天亮收工</div>
+      <div class="kicker">SUNRISE / 结算</div>
+      <h2 id="res-title">天亮了，清算开始。</h2>
+      <div class="result-sub" id="res-sub"></div>
+      <div id="rank">#1 / 4</div>
+      <div class="result-stats" id="res-stats"></div>
+      <div class="board-head"><span>名次</span><span>玩家</span><span style="text-align:right">入库</span><span style="text-align:right">携带</span><span style="text-align:right">被抓</span></div>
+      <div id="res-table"></div>
+      <div class="result-actions">
+        <button id="again">再来一局</button>
+        <button id="menu-btn" class="ghost">回大厅</button>
+      </div>
+    </div>
+  </div>
+  <div id="mobile-hint">建议横屏；本测试版需要键盘 E / 1–3。</div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const W = 1280, H = 720;
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const $ = id => document.getElementById(id);
+  const ui = {
+    menu: $('menu'), hud: $('hud'), paused: $('paused'), result: $('result'),
+    clock: $('clock'), floor: $('floor-tag'), board: $('board-rows'), feed: $('feed'),
+    prompt: $('prompt'), effects: $('effects'), carry: $('carry'),
+    homeDot: $('home-dot'), homeLabel: $('home-label'), name: $('pc-name'),
+    toast: $('toast'), resTitle: $('res-title'), resSub: $('res-sub'), rank: $('rank'),
+    resStats: $('res-stats'), resTable: $('res-table'), stamp: $('stamp')
+  };
+
+  const FLOOR_NAMES = ['地下室', '1F', '2F'];
+  const FLOOR_SHORT = ['B1', '1F', '2F'];
+  const ROOM_NAMES = [
+    ['旧仓库','配电间','洗衣房','杂物间','锅炉房','冷库','暗廊'],
+    ['门厅','值班室','茶水间','档案室','会客室','储物间','走廊'],
+    ['宿舍','书库','器材间','棋牌室','露台','医务室','长廊']
+  ];
+  const ROOM_COLORS = [
+    ['#8d6a4d','#6f7d6b','#7a6d86','#9a6d55','#6b7a7b','#8a7a5b','#6e6258'],
+    ['#b06b4b','#557d78','#9a814e','#6b7c95','#927060','#6c8270','#8a735c'],
+    ['#8e6573','#6c7b65','#8b7858','#6f6a8a','#9b7a55','#5e7c76','#7f6d5c']
+  ];
+  const HOME_CANDIDATES = [{f:1,r:0},{f:1,r:4},{f:0,r:2},{f:2,r:5}];
+  const PLAYER_COLORS = ['#e8c170','#7fb8c9','#d58373','#91b987'];
+  const PLAYER_NAMES = ['你','阿迅','老陈','小北'];
+
+  const POS_EFFECTS = [
+    {id:'rush', name:'疾跑', desc:'6 秒移速 +55%'},
+    {id:'invis', name:'隐身', desc:'5 秒内秦姨看不见你'},
+    {id:'stop', name:'时停', desc:'秦姨定住 5 秒'},
+    {id:'shield', name:'护盾', desc:'挡下一次抓捕'},
+    {id:'teleport', name:'传送', desc:'立刻回到自己房间'},
+    {id:'light', name:'轻身', desc:'30 秒携带上限 +2'},
+    {id:'grab', name:'顺手', desc:'收走本房最多 3 个包'},
+    {id:'decoy', name:'诱饵', desc:'秦姨被假人吸引 6 秒'}
+  ];
+  const NEG_EFFECTS = [
+    {id:'drop', name:'手滑', desc:'掉 1 个包'},
+    {id:'slow', name:'打滑', desc:'减速 4 秒'},
+    {id:'alert', name:'警报', desc:'秦姨锁定你 8 秒'},
+    {id:'stun', name:'眩晕', desc:'原地定住 1.5 秒'},
+    {id:'heavy', name:'增重', desc:'20 秒携带上限 -1'}
+  ];
+
+  let G = null;
+  let lastMinutes = 20;
+  let cam = { scale: 1, ox: 0, oy: 0 };
+  let lastTs = 0;
+  let toastTimer = 0, shake = 0;
+
+  function rand(a = 0, b = 1) { return a + Math.random() * (b - a); }
+  function choice(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function fmt(t) { t = Math.max(0, Math.ceil(t)); return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
+  function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+  let ROOMS = [];
+  function buildRooms() {
+    ROOMS = [];
+    for (let f = 0; f < 3; f++) {
+      for (let r = 0; r < 7; r++) {
+        const top = r < 4;
+        const x = top ? 62 + r * 280 : 202 + (r - 4) * 280;
+        const y = top ? 92 : 492;
+        ROOMS.push({
+          id: f * 7 + r, f, r, name: FLOOR_SHORT[f] + '-' + ROOM_NAMES[f][r],
+          x, y, w: 190, h: 138, cx: x + 95, cy: y + 69,
+          color: ROOM_COLORS[f][r]
+        });
+      }
+    }
+  }
+  buildRooms();
+  const roomById = id => ROOMS[id];
+  const roomAt = (f, x, y) => ROOMS.find(r => r.f === f && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) || null;
+
+  const STAIRS = [
+    [{ x: 48, y: 365, to: 1, label: '上 1F' }],
+    [{ x: 48, y: 365, to: 0, label: '下 B1' }, { x: 1048, y: 318, to: 2, label: '上 2F' }, { x: 1138, y: 392, to: 2, label: '上 2F' }],
+    [{ x: 1048, y: 318, to: 1, label: '下 1F' }, { x: 1138, y: 392, to: 1, label: '下 1F' }]
+  ];
+  function stairsOn(f) { return STAIRS[f] || []; }
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(innerWidth * dpr);
+    cv.height = Math.round(innerHeight * dpr);
+    cam.scale = Math.min(innerWidth / W, innerHeight / H);
+    cam.ox = (innerWidth - W * cam.scale) / 2;
+    cam.oy = (innerHeight - H * cam.scale) / 2;
+    cam.dpr = dpr;
+  }
+  addEventListener('resize', resize);
+
+  function toWorld(clientX, clientY) {
+    const rect = cv.getBoundingClientRect();
+    return { x: (clientX - rect.left - cam.ox) / cam.scale, y: (clientY - rect.top - cam.oy) / cam.scale };
+  }
+
+  function makePlayers(homes) {
+    return PLAYER_NAMES.map((name, i) => {
+      const h = homes[i];
+      const room = roomById(h.f * 7 + h.r);
+      return {
+        id: i, name, color: PLAYER_COLORS[i], isAI: i !== 0,
+        homeF: h.f, homeR: h.r, homeRoom: h.f * 7 + h.r,
+        floor: h.f, x: room.cx, y: room.cy,
+        carrying: [], effects: [], captures: 0, lastDeposit: -1,
+        stunUntil: 0, protectUntil: 2.2, hasteUntil: 0, slowUntil: 0,
+        invisUntil: 0, lightUntil: 0, heavyUntil: 0, shield: false,
+        target: null, aiState: '找包'
+      };
+    });
+  }
+
+  function makePackages(homes) {
+    const homeKeys = new Set(homes.map(h => h.f * 7 + h.r));
+    const arr = [];
+    for (const room of ROOMS) {
+      const slots = [[42, 52], [96, 38], [148, 86]];
+      for (let i = 0; i < 3; i++) {
+        arr.push({
+          id: room.id * 3 + i, f: room.f, r: room.r, roomId: room.id,
+          x: room.x + slots[i][0], y: room.y + slots[i][1],
+          carrier: null, storedBy: -1,
+          color: room.color, name: room.name, home: homeKeys.has(room.id)
+        });
+      }
+    }
+    return arr;
+  }
+
+  function startGame(minutes = 20) {
+    lastMinutes = minutes;
+    const homes = shuffle(HOME_CANDIDATES.slice());
+    const players = makePlayers(homes);
+    const packages = makePackages(homes);
+    const discovered = new Set(homes.map(h => h.f * 7 + h.r));
+    G = {
+      state: 'playing', t: 0, timeLeft: minutes * 60, totalTime: minutes * 60,
+      minutes, players, packages, warden: {
+        floor: 1, x: 640, y: 365, target: null, stunUntil: 0, freezeUntil: 0,
+        decoy: null, decoyUntil: 0, forced: null, forcedUntil: 0, path: null
+      },
+      floor: players[0].floor, discovered, feed: [], prompt: '', ending: false,
+      resultShown: false, lastSec: -1
+    };
+    G.floor = players[0].floor;
+    hide(ui.menu); hide(ui.paused); hide(ui.result); show(ui.hud);
+    ui.hud.classList.remove('hidden');
+    feed('午夜 23:47：六十三件包裹已经藏好。', '#c99a45');
+    feed('你的房间是 ' + homeLabel(players[0]) + '，把别人的包搬回来。', players[0].color);
+    feed('秦姨 6 秒后开始巡夜。', '#b84a3d');
+    toast('先看清自己房间的位置');
+    updateHUD(true);
+  }
+
+  function homeLabel(p) { return FLOOR_SHORT[p.homeF] + '-' + ROOM_NAMES[p.homeF][p.homeR]; }
+  function isHome(p) { const r = roomAt(p.floor, p.x, p.y); return r && r.id === p.homeRoom; }
+  function score(p) { return G.packages.reduce((n, b) => n + (!b.carrier && b.f === p.homeF && b.roomId === p.homeRoom ? 1 : 0), 0); }
+  function carried(p) { return p.carrying.length; }
+  function cap(p) { return Math.max(1, 2 + (G.t < p.lightUntil ? 2 : 0) - (G.t < p.heavyUntil ? 1 : 0)); }
+  function effectNames(p) { return p.effects.map(e => e.name).join(' / ') || '无'; }
+
+  function hide(el) { el.classList.add('hidden'); }
+  function show(el) { el.classList.remove('hidden'); }
+  function toast(msg) {
+    ui.toast.textContent = msg; ui.toast.classList.add('on'); toastTimer = 2.1;
+  }
+  function feed(msg, color = '#b84a3d') {
+    if (!G) return;
+    G.feed.unshift({ msg, color });
+    if (G.feed.length > 5) G.feed.pop();
+  }
+  function setPrompt(html) {
+    G.prompt = html || '';
+    ui.prompt.innerHTML = html ? html : '';
+    ui.prompt.classList.toggle('on', !!html);
+  }
+  function playerAtRoom(f, r) { return G.players.filter(p => p.floor === f && roomAt(p.floor, p.x, p.y)?.r === r); }
+
+  function pickupEffect(p) {
+    if (Math.random() < 0.58) {
+      const fx = choice(POS_EFFECTS);
+      if (p.isAI) {
+        applyPositive(p, fx);
+      } else if (p.effects.length < 3) {
+        p.effects.push(fx);
+        feed(p.name + ' 拿到了「' + fx.name + '」，按 1–3 释放。', p.color);
+        toast('获得正面效果：' + fx.name);
+      } else {
+        p.hasteUntil = Math.max(p.hasteUntil, G.t + 3);
+        feed(p.name + ' 的效果栏满了，转化为 3 秒疾跑。', p.color);
+      }
+    } else {
+      const fx = choice(NEG_EFFECTS);
+      applyNegative(p, fx);
+    }
+  }
+
+  function applyPositive(p, fx) {
+    switch (fx.id) {
+      case 'rush': p.hasteUntil = Math.max(p.hasteUntil, G.t + 6); feed(p.name + ' 疾跑 6 秒。', p.color); break;
+      case 'invis': p.invisUntil = Math.max(p.invisUntil, G.t + 5); feed(p.name + ' 隐身了 5 秒。', p.color); break;
+      case 'stop': G.warden.freezeUntil = Math.max(G.warden.freezeUntil, G.t + 5); feed(p.name + ' 让秦姨定住了 5 秒。', p.color); break;
+      case 'shield': p.shield = true; feed(p.name + ' 获得护盾，能挡一次抓捕。', p.color); break;
+      case 'teleport':
+        p.floor = p.homeF; p.x = roomById(p.homeRoom).cx; p.y = roomById(p.homeRoom).cy;
+        feed(p.name + ' 传送回了自己房间。', p.color); deposit(p); break;
+      case 'light': p.lightUntil = Math.max(p.lightUntil, G.t + 30); feed(p.name + ' 轻身 30 秒，携带上限 +2。', p.color); break;
+      case 'grab': {
+        const room = roomAt(p.floor, p.x, p.y);
+        if (!room) break;
+        const here = G.packages.filter(b => !b.carrier && b.storedBy < 0 && b.roomId === room.id && room.id !== p.homeRoom);
+        let n = 0;
+        for (const b of here) {
+          if (p.carrying.length >= cap(p)) break;
+          b.carrier = p; p.carrying.push(b); n++;
+          if (n >= 3) break;
+        }
+        feed(p.name + ' 顺手收走了 ' + n + ' 个包。', p.color); break;
+      }
+      case 'decoy': G.warden.decoy = p; G.warden.decoyUntil = G.t + 6; feed(p.name + ' 放出诱饵，秦姨转向了假人。', p.color); break;
+    }
+  }
+
+  function applyNegative(p, fx) {
+    switch (fx.id) {
+      case 'drop': {
+        if (!p.carrying.length) break;
+        const b = p.carrying.splice(Math.floor(Math.random() * p.carrying.length), 1)[0];
+        dropOne(b, p); feed(p.name + ' 手滑，掉了 1 个包。', '#b84a3d'); break;
+      }
+      case 'slow': p.slowUntil = Math.max(p.slowUntil, G.t + 4); feed(p.name + ' 打滑了，减速 4 秒。', '#b84a3d'); break;
+      case 'alert': G.warden.forced = p; G.warden.forcedUntil = G.t + 8; feed(p.name + ' 拉响警报，秦姨盯上了他。', '#b84a3d'); break;
+      case 'stun': p.stunUntil = Math.max(p.stunUntil, G.t + 1.5); feed(p.name + ' 被绊了一下，定住 1.5 秒。', '#b84a3d'); break;
+      case 'heavy': p.heavyUntil = Math.max(p.heavyUntil, G.t + 20); feed(p.name + ' 变重了，20 秒携带上限 -1。', '#b84a3d'); break;
+    }
+  }
+
+  function dropOne(b, p) {
+    b.carrier = null; b.storedBy = -1; b.f = p.floor;
+    b.x = clamp(p.x + rand(-22, 22), 30, W - 30);
+    b.y = clamp(p.y + rand(-22, 22), 90, H - 30);
+    const room = roomAt(b.f, b.x, b.y); b.roomId = room ? room.id : -1; b.r = room ? room.r : -1;
+  }
+
+  function dropAll(p) {
+    for (const b of p.carrying) {
+      b.carrier = null; b.storedBy = -1; b.f = p.floor;
+      b.x = clamp(p.x + rand(-26, 26), 30, W - 30);
+      b.y = clamp(p.y + rand(-26, 26), 90, H - 30);
+      const room = roomAt(b.f, b.x, b.y); b.roomId = room ? room.id : -1; b.r = room ? room.r : -1;
+    }
+    p.carrying = [];
+  }
+
+  function deposit(p) {
+    if (!p.carrying.length) return;
+    for (const b of p.carrying) {
+      b.carrier = null; b.storedBy = p.id;
+      b.f = p.homeF; b.roomId = p.homeRoom; b.r = p.homeR;
+      b.x = roomById(p.homeRoom).cx + rand(-45, 45);
+      b.y = roomById(p.homeRoom).cy + rand(-32, 32);
+    }
+    const n = p.carrying.length;
+    p.carrying = [];
+    p.lastDeposit = G.t;
+    feed(p.name + ' 入库 ' + n + ' 个包。', p.color);
+    if (!p.isAI) toast('入库 +' + n);
+  }
+
+  function pickup(p, b) {
+    if (p.carrying.length >= cap(p)) { if (!p.isAI) toast('拿不下了'); return false; }
+    if (b.f === p.homeF && b.roomId === p.homeRoom) { if (!p.isAI) toast('自己房间的包不能捡'); return false; }
+    b.carrier = p; b.storedBy = -1; p.carrying.push(b);
+    feed(p.name + ' 在 ' + FLOOR_SHORT[b.f] + '-' + ROOM_NAMES[b.f][b.r] + ' 捡到 1 个包。', p.color);
+    pickupEffect(p);
+    return true;
+  }
+
+  function nearestPackage(p) {
+    let best = null, bd = Infinity;
+    for (const b of G.packages) {
+      if (b.carrier || b.f !== p.floor) continue;
+      if (b.f === p.homeF && b.roomId === p.homeRoom) continue;
+      const d = Math.hypot(b.x - p.x, b.y - p.y);
+      if (d < bd) { bd = d; best = b; }
+    }
+    return { b: best, d: bd };
+  }
+
+  function nearestStair(f, to) {
+    let best = null, bd = Infinity;
+    for (const s of stairsOn(f)) {
+      if (s.to !== to) continue;
+      const d = Math.hypot(s.x - p.x, s.y - p.y);
+      if (d < bd) { bd = d; best = s; }
+    }
+    return best;
+  }
+
+  function stairToward(f, tf, fromX, fromY) {
+    const opts = stairsOn(f);
+    let best = null, bd = Infinity;
+    for (const s of opts) {
+      const reach = s.to === tf || (f === 0 && s.to === 1) || (f === 2 && s.to === 1) || (f === 1 && s.to !== 1);
+      if (!reach) continue;
+      const d = Math.hypot(s.x - fromX, s.y - fromY);
+      if (d < bd) { bd = d; best = s; }
+    }
+    return best || opts[0] || null;
+  }
+
+  function useStair(p, s) {
+    if (!s) return false;
+    p.floor = s.to;
+    p.x = s.x + (s.to === 0 ? 34 : 30);
+    p.y = s.y + (s.to === 2 ? -48 : 48);
+    p.floor = s.to;
+    G.floor = p.floor;
+    const room = roomAt(p.floor, p.x, p.y);
+    if (room) discover(room.id);
+    feed(p.name + ' 走楼梯到了 ' + FLOOR_SHORT[p.floor] + '。', p.color);
+    if (!p.isAI) toast('到了 ' + FLOOR_NAMES[p.floor]);
+    return true;
+  }
+
+  function discover(id) {
+    if (id != null) G.discovered.add(id);
+  }
+
+  function interact() {
+    if (!G || G.state !== 'playing') return;
+    const p = G.players[0];
+    if (G.t < p.stunUntil) return;
+    const room = roomAt(p.floor, p.x, p.y);
+    if (room) discover(room.id);
+    const near = nearestPackage(p);
+    const stairs = stairsOn(p.floor);
+    let ns = null, nd = 52;
+    for (const s of stairs) {
+      const d = Math.hypot(s.x - p.x, s.y - p.y);
+      if (d < nd) { nd = d; ns = s; }
+    }
+    if (near.b && near.d < 34) {
+      pickup(p, near.b); return;
+    }
+    if (ns) { useStair(p, ns); return; }
+    if (room && room.id === p.homeRoom && p.carrying.length) { deposit(p); return; }
+    if (room && room.id === p.homeRoom) { toast('这是你的房间，走到这里会自动入库。'); return; }
+  }
+
+  function chooseWardenTarget() {
+    const w = G.warden;
+    if (w.decoy && G.t < w.decoyUntil && G.t >= G.players[w.decoy.id]?.invisUntil) return w.decoy;
+    if (w.forced && G.t < w.forcedUntil) return w.forced;
+    let best = null, bs = -Infinity;
+    for (const p of G.players) {
+      if (G.t < p.protectUntil || G.t < p.invisUntil) continue;
+      const same = p.floor === w.floor ? 1 : 0;
+      const carrying = p.carrying.length > 0 ? 30 : 0;
+      const d = p.floor === w.floor ? Math.hypot(p.x - w.x, p.y - w.y) : 400;
+      const s = same * 50 + carrying - d * 0.04;
+      if (s > bs) { bs = s; best = p; }
+    }
+    return best;
+  }
+
+  function wardenUpdate(dt) {
+    const w = G.warden;
+    if (G.t < 6) return;
+    if (G.t < w.stunUntil || G.t < w.freezeUntil) return;
+    if (!w.target || (w.target === w.decoy && G.t >= w.decoyUntil) || (w.target === w.forced && G.t >= w.forcedUntil) || G.t < w.target.protectUntil) {
+      w.target = chooseWardenTarget();
+    }
+    const p = w.target;
+    if (!p) return;
+    if (p.floor !== w.floor) {
+      const s = stairToward(w.floor, p.floor, w.x, w.y);
+      if (s) {
+        const d = Math.hypot(s.x - w.x, s.y - w.y);
+        if (d < 26) {
+          w.floor = s.to; w.x = s.x; w.y = s.y + (s.to === 2 ? -40 : 30);
+        } else {
+          const sp = 142 * dt;
+          const ang = Math.atan2(s.y - w.y, s.x - w.x);
+          w.x += Math.cos(ang) * sp; w.y += Math.sin(ang) * sp;
+        }
+      }
+      return;
+    }
+    const d = Math.hypot(p.x - w.x, p.y - w.y);
+    if (d < 26) {
+      capture(p); return;
+    }
+    const sp = 146 * dt;
+    const ang = Math.atan2(p.y - w.y, p.x - w.x);
+    w.x += Math.cos(ang) * sp; w.y += Math.sin(ang) * sp;
+  }
+
+  function capture(p) {
+    const w = G.warden;
+    if (p.shield) {
+      p.shield = false; w.stunUntil = G.t + 1.5;
+      feed(p.name + ' 的护盾挡住了秦姨。', p.color);
+      w.target = null; return;
+    }
+    const n = p.carrying.length;
+    dropAll(p);
+    p.captures++;
+    const known = [...G.discovered].map(id => roomById(id));
+    const room = choice(known) || roomById(p.homeRoom);
+    p.floor = room.f; p.x = room.cx; p.y = room.cy;
+    p.stunUntil = G.t + 1.5; p.protectUntil = G.t + 3;
+    w.stunUntil = G.t + 1.4; w.target = null;
+    feed(p.name + ' 被秦姨抓住，掉了 ' + n + ' 个包，被丢到 ' + room.name + '。', '#b84a3d');
+    if (!p.isAI) { toast('你被秦姨抓住了，掉了 ' + n + ' 个包'); shake = 0.6; }
+  }
+
+  function speedOf(p) {
+    let s = 158;
+    if (G.t < p.hasteUntil) s *= 1.55;
+    if (G.t < p.slowUntil) s *= 0.55;
+    return s;
+  }
+
+  function moveToward(p, x, y, dt, speed) {
+    const d = Math.hypot(x - p.x, y - p.y);
+    if (d < 1) return;
+    const step = Math.min(d, speed * dt);
+    p.x += (x - p.x) / d * step;
+    p.y += (y - p.y) / d * step;
+    p.x = clamp(p.x, 24, W - 24); p.y = clamp(p.y, 86, H - 28);
+  }
+
+  function aiUpdate(p, dt) {
+    if (G.t < p.stunUntil) return;
+    const room = roomAt(p.floor, p.x, p.y);
+    if (room) discover(room.id);
+    if (room && room.id === p.homeRoom) {
+      if (p.carrying.length) deposit(p);
+      if (!p.carrying.length) {
+        p.aiState = '找包';
+      }
+    }
+    let targetPkg = null;
+    if (p.target) {
+      if (p.target.carrier || (p.target.f === p.homeF && p.target.roomId === p.homeRoom)) p.target = null;
+      else targetPkg = p.target;
+    }
+    if (p.carrying.length >= cap(p) || (p.carrying.length && G.warden.target === p)) {
+      // go home
+      if (p.floor !== p.homeF) {
+        const s = stairToward(p.floor, p.homeF, p.x, p.y);
+        if (s) {
+          const d = Math.hypot(s.x - p.x, s.y - p.y);
+          if (d < 24) { p.floor = s.to; p.x = s.x; p.y = s.y + (s.to === 2 ? -38 : 34); }
+          else moveToward(p, s.x, s.y, dt, speedOf(p) * 0.92);
+        }
+      } else {
+        const home = roomById(p.homeRoom);
+        moveToward(p, home.cx, home.cy, dt, speedOf(p) * 0.92);
+      }
+      p.aiState = '搬回家';
+      return;
+    }
+    if (!targetPkg) {
+      let bd = Infinity;
+      for (const b of G.packages) {
+        if (b.carrier) continue;
+        if (b.f === p.homeF && b.roomId === p.homeRoom) continue;
+        const d = Math.hypot(b.x - p.x, b.y - p.y) + (b.f === p.floor ? 0 : 500);
+        if (d < bd) { bd = d; targetPkg = b; }
+      }
+      p.target = targetPkg;
+    }
+    if (!targetPkg) { p.aiState = '闲逛'; return; }
+    if (targetPkg.f !== p.floor) {
+      const s = stairToward(p.floor, targetPkg.f, p.x, p.y);
+      if (s) {
+        const d = Math.hypot(s.x - p.x, s.y - p.y);
+        if (d < 24) { p.floor = s.to; p.x = s.x; p.y = s.y + (s.to === 2 ? -38 : 34); }
+        else moveToward(p, s.x, s.y, dt, speedOf(p) * 0.9);
+      }
+      p.aiState = '去 ' + FLOOR_SHORT[targetPkg.f];
+      return;
+    }
+    const d = Math.hypot(targetPkg.x - p.x, targetPkg.y - p.y);
+    if (d < 28) { pickup(p, targetPkg); p.target = null; return; }
+    moveToward(p, targetPkg.x, targetPkg.y, dt, speedOf(p) * 0.9);
+    p.aiState = '找包';
+  }
+
+  function humanUpdate(p, dt) {
+    if (G.t < p.stunUntil) return;
+    let dx = 0, dy = 0;
+    if (keys.has('KeyW') || keys.has('ArrowUp')) dy -= 1;
+    if (keys.has('KeyS') || keys.has('ArrowDown')) dy += 1;
+    if (keys.has('KeyA') || keys.has('ArrowLeft')) dx -= 1;
+    if (keys.has('KeyD') || keys.has('ArrowRight')) dx += 1;
+    if (dx || dy) {
+      const l = Math.hypot(dx, dy); dx /= l; dy /= l;
+      p.x = clamp(p.x + dx * speedOf(p) * dt, 24, W - 24);
+      p.y = clamp(p.y + dy * speedOf(p) * dt, 86, H - 28);
+    }
+    const room = roomAt(p.floor, p.x, p.y);
+    if (room) {
+      discover(room.id);
+      if (room.id === p.homeRoom && p.carrying.length) deposit(p);
+    }
+  }
+
+  const keys = new Set();
+  addEventListener('keydown', e => {
+    if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+    if (!G || G.state !== 'playing') {
+      if (e.code === 'KeyP' || e.code === 'Escape') { if (G && G.state === 'paused') resume(); }
+      return;
+    }
+    if (e.code === 'KeyP' || e.code === 'Escape') { pause(); return; }
+    if (e.code === 'KeyE') { interact(); return; }
+    if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3') { useEffect(Number(e.code.slice(-1)) - 1); return; }
+    keys.add(e.code);
+  });
+  addEventListener('keyup', e => keys.delete(e.code));
+
+  function useEffect(i) {
+    if (!G || G.state !== 'playing') return;
+    const p = G.players[0];
+    if (i < 0 || i >= p.effects.length) return;
+    const fx = p.effects.splice(i, 1)[0];
+    applyPositive(p, fx);
+    toast('释放：' + fx.name);
+  }
+
+  function pause() { if (!G || G.state !== 'playing') return; G.state = 'paused'; show(ui.paused); }
+  function resume() { if (!G || G.state !== 'paused') return; G.state = 'playing'; hide(ui.paused); lastTs = performance.now(); }
+
+  function finishGame() {
+    if (!G || G.state === 'result') return;
+    G.state = 'result';
+    const ranked = G.players.slice().sort((a, b) => score(b) - score(a) || a.captures - b.captures || b.lastDeposit - a.lastDeposit);
+    const me = ranked.findIndex(p => p.id === 0);
+    G.ranked = ranked;
+    G.result = { rank: me + 1, win: me === 0 };
+    showResult();
+  }
+
+  function showResult() {
+    hide(ui.hud); hide(ui.paused); hide(ui.menu); show(ui.result);
+    const me = G.players[0];
+    const rank = G.result.rank;
+    ui.resTitle.textContent = G.result.win ? '天亮了，你守住了这栋楼。' : '天亮了，清算开始。';
+    ui.resSub.textContent = G.result.win ? '四间房，六十三件包裹，你把最多的一批留在了自己屋里。' : '你入库 ' + score(me) + ' 个包，秦姨记下了你的 ' + me.captures + ' 次被抓。';
+    ui.rank.textContent = '#' + rank + ' / 4';
+    ui.stamp.textContent = G.result.win ? '第一名' : '第 ' + rank + ' 名';
+    ui.stamp.style.borderColor = G.result.win ? '#4f7864' : '#b84a3d';
+    ui.stamp.style.color = G.result.win ? '#4f7864' : '#b84a3d';
+    ui.resStats.innerHTML = `
+      <div class="stat"><small>你的入库</small><b>${score(me)}</b></div>
+      <div class="stat"><small>携带上限</small><b>${cap(me)}</b></div>
+      <div class="stat"><small>被抓次数</small><b>${me.captures}</b></div>`;
+    ui.resTable.innerHTML = G.ranked.map((p, i) => `
+      <div class="board-row ${p.id === 0 ? 'me' : ''}">
+        <span class="rk">${String(i + 1).padStart(2, '0')}</span>
+        <span class="nm"><i style="background:${p.color}"></i>${p.name}${p.isAI ? '' : '（你）'}</span>
+        <span class="num">${score(p)}</span>
+        <span class="num">${p.carrying.length}</span>
+        <span class="cap">${p.captures}</span>
+      </div>`).join('');
+  }
+
+  function showMenu() {
+    G = null;
+    ui.hud.classList.add('hidden');
+    hide(ui.result); hide(ui.paused); show(ui.menu);
+  }
+
+  function update(dt) {
+    if (!G || G.state !== 'playing') return;
+    G.t += dt;
+    G.timeLeft -= dt;
+    if (G.timeLeft <= 0) { G.timeLeft = 0; finishGame(); return; }
+    for (const p of G.players) {
+      if (p.isAI) aiUpdate(p, dt); else humanUpdate(p, dt);
+    }
+    wardenUpdate(dt);
+    G.floor = G.players[0].floor;
+    // expire transient effects
+    for (const p of G.players) {
+      if (p.effects.length > 3) p.effects.length = 3;
+    }
+    updateHUD();
+  }
+
+  function updatePrompt() {
+    if (!G) return;
+    const p = G.players[0];
+    const room = roomAt(p.floor, p.x, p.y);
+    if (room && room.id === p.homeRoom) {
+      setPrompt(p.carrying.length ? '<kbd>E</kbd> 放回自己房间（走到这里会自动入库）' : '自己的房间 · 走到这里会自动入库');
+      return;
+    }
+    const near = nearestPackage(p);
+    if (near.b && near.d < 34) {
+      if (p.carrying.length >= cap(p)) setPrompt('拿不下了 · 回自己房间入库');
+      else setPrompt('<kbd>E</kbd> 捡起 ' + FLOOR_SHORT[near.b.f] + '-' + ROOM_NAMES[near.b.f][near.b.r] + ' 的包裹');
+      return;
+    }
+    for (const s of stairsOn(p.floor)) {
+      if (Math.hypot(s.x - p.x, s.y - p.y) < 52) { setPrompt('<kbd>E</kbd> ' + s.label); return; }
+    }
+    if (room && room.id === p.homeRoom) return;
+    setPrompt(p.carrying.length ? '回自己房间：' + homeLabel(p) : '去找别人的包');
+  }
+
+  function updateHUD(force) {
+    if (!G) return;
+    ui.clock.textContent = fmt(G.timeLeft);
+    const room = roomAt(G.floor, G.players[0].x, G.players[0].y);
+    ui.floor.textContent = FLOOR_SHORT[G.floor] + ' · ' + (room ? ROOM_NAMES[G.floor][room.r] : '走廊');
+    const me = G.players[0];
+    ui.name.textContent = me.name;
+    ui.homeLabel.textContent = homeLabel(me);
+    ui.homeDot.style.background = me.color;
+    const capNow = cap(me);
+    let chips = '';
+    for (let i = 0; i < capNow; i++) {
+      const b = me.carrying[i];
+      chips += b ? `<span class="chip" style="border-color:${b.color}">${FLOOR_SHORT[b.f]}-${ROOM_NAMES[b.f][b.r]}</span>` : '<span class="chip empty">空</span>';
+    }
+    ui.carry.innerHTML = chips;
+    const sorted = G.players.slice().sort((a, b) => score(b) - score(a) || a.captures - b.captures);
+    ui.board.innerHTML = sorted.map((p, i) => `
+      <div class="score-row ${p.id === 0 ? 'me' : ''}">
+        <i class="dot" style="background:${p.color}"></i>
+        <span class="nm">${p.name}</span>
+        <span class="pc">${score(p)}</span>
+        <span class="cap">${p.carrying.length}/${cap(p)}</span>
+      </div>`).join('');
+    const fx = me.effects;
+    ui.effects.innerHTML = fx.length ? fx.map((e, i) => `
+      <div class="fx-card" onclick="__RR_USE(${i})"><b>${e.name}</b><span>[${i + 1}] ${e.desc}</span></div>`).join('') : '<div class="fx-empty">正面效果栏空着 · 捡包时随机获得</div>';
+    let fs = '';
+    for (const f of G.feed) fs += `<div class="feed-item" style="--c:${f.color}"><b>${fmt(G.timeLeft)}</b>${f.msg}</div>`;
+    ui.feed.innerHTML = fs;
+    updatePrompt();
+    if (toastTimer > 0) {
+      toastTimer -= 0.016;
+      if (toastTimer <= 0) ui.toast.classList.remove('on');
+    }
+  }
+
+  function render() {
+    const dpr = cam.dpr || 1;
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.fillStyle = '#14110e'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(cam.scale * dpr, 0, 0, cam.scale * dpr, cam.ox * dpr, cam.oy * dpr);
+    ctx.save();
+    if (shake > 0) { ctx.translate(rand(-4,4), rand(-4,4)); shake -= 0.016; }
+    drawWorld();
+    ctx.restore();
+  }
+
+  function drawWorld() {
+    // floor base
+    ctx.fillStyle = '#1b1712'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#27211a'; ctx.fillRect(24, 76, W - 48, H - 104);
+    // corridor
+    ctx.fillStyle = '#201b15'; ctx.fillRect(44, 258, W - 88, 208);
+    ctx.strokeStyle = 'rgba(208,180,133,.16)'; ctx.lineWidth = 1;
+    for (let i = 0; i < 80; i++) {
+      const x = 50 + i * 16;
+      ctx.beginPath(); ctx.moveTo(x, 265); ctx.lineTo(x, 458); ctx.stroke();
+    }
+    ctx.fillStyle = '#d9c9a9'; ctx.font = '10px "Courier New",monospace'; ctx.globalAlpha = .35;
+    ctx.fillText('NIGHT SHIFT · FLOOR ' + FLOOR_SHORT[G ? G.floor : 1], 44, 72);
+    ctx.globalAlpha = 1;
+
+    const floor = G ? G.floor : 1;
+    for (const room of ROOMS.filter(r => r.f === floor)) {
+      const isHome = G && G.players.some(p => p.homeRoom === room.id);
+      ctx.fillStyle = isHome ? 'rgba(166,126,54,.20)' : 'rgba(70,58,44,.34)';
+      ctx.strokeStyle = isHome ? 'rgba(220,178,92,.82)' : 'rgba(214,190,150,.27)';
+      ctx.lineWidth = isHome ? 2 : 1;
+      roundRect(room.x, room.y, room.w, room.h, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = isHome ? '#f0cf8a' : '#b9a88d';
+      ctx.font = '11px "Microsoft YaHei",sans-serif';
+      ctx.fillText((isHome ? '⌂ ' : '') + room.name, room.x + 10, room.y + 18);
+      ctx.fillStyle = 'rgba(212,193,159,.36)';
+      ctx.font = '8px "Courier New",monospace';
+      ctx.fillText(isHome ? 'YOUR ROOM' : 'ROOM ' + String(room.r + 1).padStart(2, '0'), room.x + 10, room.y + 30);
+    }
+
+    // stairs
+    for (const s of stairsOn(floor)) drawStair(s);
+
+    if (!G) return;
+    // packages
+    for (const b of G.packages) {
+      if (b.f !== floor || b.carrier) continue;
+      drawBag(b.x, b.y, b.color, .92);
+    }
+    // home markers labels
+    for (const p of G.players) {
+      if (p.homeF !== floor) continue;
+      const h = roomById(p.homeRoom);
+      ctx.fillStyle = 'rgba(0,0,0,.35)';
+      ctx.fillRect(h.x + 6, h.y + h.h - 20, h.w - 12, 14);
+      ctx.fillStyle = p.color; ctx.font = '10px "Microsoft YaHei",sans-serif';
+      ctx.fillText(p.name + ' 的房间 · ' + score(p) + ' 个包', h.x + 12, h.y + h.h - 9);
+    }
+    // target line warden
+    const w = G.warden;
+    if (w.target && w.target.floor === w.floor) {
+      ctx.strokeStyle = 'rgba(184,74,61,.45)'; ctx.setLineDash([5,5]); ctx.beginPath();
+      ctx.moveTo(w.x, w.y); ctx.lineTo(w.target.x, w.target.y); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // players
+    for (const p of G.players) {
+      if (p.floor !== floor) continue;
+      drawPlayer(p);
+    }
+    if (w.floor === floor) drawWarden(w);
+    // floor hint
+    ctx.fillStyle = 'rgba(232,213,181,.7)'; ctx.font = '11px "Microsoft YaHei",sans-serif';
+    ctx.fillText('楼层：' + FLOOR_NAMES[floor] + ' · 楼梯按 E 换层', 44, H - 14);
+  }
+
+  function roundRect(x,y,w,h,r) {
+    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+  }
+
+  function drawBag(x, y, color, alpha) {
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.fillStyle = color; roundRect(x-8,y-7,16,14,3); ctx.fill();
+    ctx.strokeStyle = 'rgba(30,22,16,.55)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y-7, 4.5, Math.PI, 0); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,246,225,.7)'; ctx.fillRect(x-5, y-2, 10, 2);
+    ctx.restore();
+  }
+
+  function drawStair(s) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(207,173,108,.16)'; ctx.strokeStyle = 'rgba(221,189,132,.55)';
+    ctx.lineWidth = 1.5;
+    roundRect(s.x - 20, s.y - 22, 40, 44, 3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e3c88c'; ctx.font = '9px "Courier New",monospace'; ctx.textAlign = 'center';
+    ctx.fillText(s.to > (G ? G.floor : 1) ? '▲' : '▼', s.x, s.y - 2);
+    ctx.font = '8px "Microsoft YaHei",sans-serif'; ctx.fillStyle = '#d3bfa0';
+    ctx.fillText(s.label, s.x, s.y + 14);
+    ctx.restore();
+  }
+
+  function drawPlayer(p) {
+    const me = p.id === 0;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    if (G.t < p.invisUntil) ctx.globalAlpha = .38;
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(0, 9, 12, 5, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, -7, 9, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = me ? '#fff3d4' : 'rgba(20,16,12,.7)'; ctx.lineWidth = me ? 2.5 : 1.5; ctx.stroke();
+    ctx.fillStyle = '#2a2219'; ctx.fillRect(-7, 2, 14, 10);
+    ctx.fillStyle = p.color; ctx.fillRect(-7, 2, 14, 3);
+    if (p.carrying.length) {
+      ctx.fillStyle = '#f0d68d'; ctx.beginPath(); ctx.arc(12, -12, 5, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#2b2218'; ctx.font = '8px "Courier New",monospace'; ctx.textAlign = 'center';
+      ctx.fillText(String(p.carrying.length), 12, -9);
+    }
+    ctx.fillStyle = me ? '#fff3d4' : '#e4d4b9'; ctx.font = '10px "Microsoft YaHei",sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(p.name, 0, -23);
+    ctx.restore();
+  }
+
+  function drawWarden(w) {
+    ctx.save(); ctx.translate(w.x, w.y);
+    ctx.fillStyle = 'rgba(0,0,0,.32)'; ctx.beginPath(); ctx.ellipse(0, 10, 15, 6, 0, 0, Math.PI*2); ctx.fill();
+    if (G.t < w.freezeUntil) { ctx.strokeStyle = 'rgba(120,190,220,.7)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, -8, 19, 0, Math.PI*2); ctx.stroke(); }
+    ctx.fillStyle = '#26201a'; ctx.beginPath(); ctx.arc(0, -15, 10, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#17130f'; ctx.fillRect(-12, -5, 24, 18);
+    ctx.fillStyle = '#b84a3d'; ctx.fillRect(-12, 5, 24, 3);
+    ctx.fillStyle = '#e7b86a'; ctx.beginPath(); ctx.arc(0, -15, 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#d9c7ab'; ctx.font = '10px "Microsoft YaHei",sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('秦姨', 0, -31);
+    ctx.restore();
+  }
+
+  // register debug click helper for effect cards (inline onclick)
+  window.__RR_USE = useEffect;
+
+  // menu buttons
+  $('start20').addEventListener('click', () => startGame(20));
+  $('start3').addEventListener('click', () => startGame(3));
+  $('pause').addEventListener('click', () => pause());
+  $('resume').addEventListener('click', () => resume());
+  $('quit').addEventListener('click', () => { hide(ui.paused); showMenu(); });
+  $('again').addEventListener('click', () => startGame(lastMinutes));
+  $('menu-btn').addEventListener('click', () => showMenu());
+
+  window.__RR__ = {
+    start: startGame,
+    state: () => G ? {
+      state: G.state, t: +G.t.toFixed(2), timeLeft: +G.timeLeft.toFixed(2),
+      floor: G.floor, rank: G.result ? G.result.rank : null,
+      players: G.players.map(p => ({ name: p.name, isAI: p.isAI, floor: p.floor, x: +p.x.toFixed(1), y: +p.y.toFixed(1), carrying: p.carrying.length, score: score(p), captures: p.captures, effects: p.effects.map(e => e.name), home: homeLabel(p) })),
+      warden: G.warden ? { floor: G.warden.floor, x: +G.warden.x.toFixed(1), y: +G.warden.y.toFixed(1), target: G.warden.target ? G.warden.target.name : null } : null,
+      packagesLeft: G.packages.filter(b => !b.carrier).length
+    } : null,
+    tp: (f, x, y) => { if (!G) return; const p = G.players[0]; p.floor = f; p.x = x; p.y = y; G.floor = f; },
+    setTime: s => { if (G) G.timeLeft = s; },
+    finish: finishGame,
+    packageList: () => G.packages.filter(b => !b.carrier).map(b => ({ id: b.id, f: b.f, room: b.r, x: b.x, y: b.y, home: b.home })),
+    effects: () => G ? G.players[0].effects.map(e => e.id) : [],
+    giveEffect: id => { const fx = POS_EFFECTS.find(e => e.id === id); if (fx && G) { G.players[0].effects.push(fx); updateHUD(true); } },
+    capture: () => { if (G) capture(G.players[0]); },
+    wardenPos: () => G ? { f: G.warden.floor, x: G.warden.x, y: G.warden.y } : null
+  };
+
+  resize();
+  requestAnimationFrame(function loop(ts) {
+    if (!lastTs) lastTs = ts;
+    const dt = Math.min(0.05, (ts - lastTs) / 1000);
+    lastTs = ts;
+    if (G && G.state === 'playing') update(dt);
+    render();
+    requestAnimationFrame(loop);
+  });
+})();
+</script>
+</body>
+</html>
