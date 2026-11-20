@@ -253,6 +253,30 @@ body.touch .fx-card{padding:5px 6px;font-size:8px}
   body.touch .menu-sheet h1 em{font-size:18px}
   body.touch .menu-cols{gap:8px}
 }
+
+/* ---- character model preview ---- */
+.model-open{margin-top:10px;width:100%;text-align:center}
+#modelViewer{position:fixed;inset:0;z-index:40;pointer-events:none;color:#eee4d0}
+#modelViewer .model-head{position:absolute;left:28px;top:24px;max-width:430px;padding:20px 24px;background:rgba(13,11,9,.72);border:1px solid rgba(224,169,92,.24);backdrop-filter:blur(6px)}
+#modelViewer .model-head .eyebrow{margin-bottom:10px;color:#d9b57a}
+#modelViewer .model-head h2{margin:0 0 8px;font-size:34px;font-weight:600;letter-spacing:.08em}
+#modelViewer .model-head p{margin:0;font-size:12px;line-height:1.8;color:#b9a486}
+#modelClose{position:absolute;right:24px;top:24px;pointer-events:auto;background:rgba(20,16,12,.8);color:#eadcc2;border-color:rgba(224,169,92,.35)}
+#modelViewer .model-labels{position:absolute;left:8%;right:8%;bottom:15%;display:flex;justify-content:space-between;pointer-events:none}
+#modelViewer .model-tag{display:flex;flex-direction:column;gap:4px;padding:10px 14px;background:rgba(13,11,9,.7);border-left:2px solid #7b9a78;min-width:150px}
+#modelViewer .model-tag.warden{border-left-color:#b43c2d;text-align:right;align-items:flex-end}
+#modelViewer .model-tag b{font-size:14px;letter-spacing:.08em}
+#modelViewer .model-tag span{font-size:10px;color:#a99982}
+#modelViewer .model-note{position:absolute;left:0;right:0;bottom:22px;text-align:center;font-size:10px;letter-spacing:.16em;color:#8f806b}
+@media (max-height:540px) and (orientation:landscape){
+  #modelViewer .model-head{left:14px;top:12px;max-width:320px;padding:12px 16px}
+  #modelViewer .model-head h2{font-size:24px}
+  #modelViewer .model-head p{font-size:10px;line-height:1.6}
+  #modelViewer .model-labels{bottom:10%}
+  #modelViewer .model-tag{padding:7px 10px;min-width:120px}
+  #modelViewer .model-tag b{font-size:12px}
+  #modelViewer .model-note{bottom:8px}
+}
 </style>
 </head>
 <body>
@@ -286,6 +310,7 @@ body.touch .fx-card{padding:5px 6px;font-size:8px}
           <div class="callout">第一人称原型<br><small>角色使用可替换的程序化人形，先看玩法与空间；下一步换真人模型与动作。</small></div>
           <button id="play" class="primary">进入宿舍楼 <span>→</span></button>
           <div class="mode-row"><button class="ghost" id="play-3">3 分钟测试局</button><button class="ghost" id="play-20">20 分钟标准局</button></div>
+          <button id="modelBtn" class="ghost model-open">查看玩家 / 秦姨模型</button>
           <p class="fine desktop-only">单机 · 1 名真人 + 3 名 AI 学生 + 秦姨。建议电脑 + 鼠标。</p>
           <p class="fine touch-only">单机 · 1 名真人 + 3 名 AI 学生 + 秦姨。手机建议横屏，关掉其他应用。</p>
         </div>
@@ -293,6 +318,20 @@ body.touch .fx-card{padding:5px 6px;font-size:8px}
       <div class="menu-foot"><span>本版是 P1/P2 可玩原型</span><span>编号 04 / 03:17</span></div>
     </div>
   </section>
+
+  <div id="modelViewer" class="hidden">
+    <div class="model-head">
+      <div class="eyebrow">CHARACTER PREVIEW / 测试模型</div>
+      <h2>玩家与秦姨</h2>
+      <p>当前是程序化低模占位，先确认轮廓、服装和气质；下一步换真人模型。</p>
+    </div>
+    <button id="modelClose" class="ghost">返回大厅</button>
+    <div class="model-labels">
+      <div class="model-tag"><b>玩家 · 成员</b><span>绿外套 · 学生</span></div>
+      <div class="model-tag warden"><b>监管者 · 秦姨</b><span>开衫 · 工牌 · 钥匙</span></div>
+    </div>
+    <div class="model-note">模型自动旋转 · 仅用于检查外观</div>
+  </div>
 
   <div id="hud" class="hidden">
     <div class="hud-top">
@@ -826,7 +865,8 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     helpClose: $('helpClose'), again: $('again'), toMenu: $('toMenu'), pauseBtn: $('pauseBtn'), helpBtn: $('helpBtn'), wardenToggle: $('wardenToggle'),
     resultTitle: $('resultTitle'), resultSub: $('resultSub'), resultStamp: $('resultStamp'),
     resultEyebrow: $('resultEyebrow'), statScore: $('statScore'), statCaught: $('statCaught'), statRank: $('statRank'),
-    resultRows: $('resultRows'), joy: $('joystick'), joyKnob: $('joystick-knob'), touchAction: $('touch-action'), touchSprint: $('touch-sprint')
+    resultRows: $('resultRows'), joy: $('joystick'), joyKnob: $('joystick-knob'), touchAction: $('touch-action'), touchSprint: $('touch-sprint'),
+    modelBtn: $('modelBtn'), modelViewer: $('modelViewer'), modelClose: $('modelClose')
   };
   const mapCtx = ui.minimap.getContext('2d');
 
@@ -838,6 +878,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     wardenTarget: null, decoy: null, noticeAt: 0, result: null,
     homeRings: []
   };
+  let modelScene = null, modelCam = null, modelPivot = null, modelPlayer = null, modelWarden = null;
   const keys = Object.create(null);
   const touchInput = { joyId: null, joyX: 0, joyY: 0, lookId: null, lookX: 0, lookY: 0, sprint: false };
   const dynamic = new THREE.Group();
@@ -988,6 +1029,8 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     G.result = null; G.lastRoomId = null; G.lastHud = 0; G.lastMap = 0;
     while (dynamic.children.length) dynamic.remove(dynamic.children[0]);
     ui.menu.classList.add('hidden'); ui.result.classList.add('hidden'); ui.pause.classList.add('hidden'); ui.help.classList.add('hidden');
+    if (ui.modelViewer) ui.modelViewer.classList.add('hidden');
+    document.body.classList.remove('modeling');
     ui.hud.classList.remove('hidden');
     ui.feed.innerHTML = '';
 
@@ -1792,6 +1835,62 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (document.pointerLockElement) document.exitPointerLock();
   }
 
+  function buildModelViewer() {
+    modelScene = new THREE.Scene();
+    modelScene.background = new THREE.Color(0x080706);
+    modelScene.fog = new THREE.Fog(0x080706, 7, 16);
+    modelCam = new THREE.PerspectiveCamera(34, innerWidth / innerHeight, 0.1, 40);
+    modelCam.position.set(0, 1.52, 5.15);
+    modelCam.lookAt(0, 1.02, 0);
+    modelScene.add(new THREE.HemisphereLight(0xffe7c4, 0x221912, 1.8));
+    const key = new THREE.DirectionalLight(0xffd2a4, 4.2);
+    key.position.set(2.6, 4.2, 3.5); modelScene.add(key);
+    const rim = new THREE.DirectionalLight(0x7f9dc0, 2.4);
+    rim.position.set(-3.2, 2.4, -2.8); modelScene.add(rim);
+    const stage = new THREE.Mesh(new THREE.CylinderGeometry(2.7, 2.85, 0.16, 48), new THREE.MeshStandardMaterial({ color: 0x1a1511, roughness: 0.85 }));
+    stage.position.y = -0.08; modelScene.add(stage);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.015, 6, 64), new THREE.MeshBasicMaterial({ color: 0x84663a }));
+    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.015; modelScene.add(ring);
+    const backdrop = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshStandardMaterial({ color: 0x15110e, roughness: 1 }));
+    backdrop.position.set(0, 2.2, -2.6); modelScene.add(backdrop);
+    const glow = new THREE.PointLight(0xffc98a, 18, 9);
+    glow.position.set(-2.4, 2.4, 2.2); modelScene.add(glow);
+    modelPivot = new THREE.Group();
+    modelPlayer = humanoid({ skin: SKINS[0], hair: HAIRS[0], shirt: 0x4e6557, pants: 0x282b2a });
+    modelPlayer.position.set(-1.12, 0, 0);
+    modelWarden = humanoid({ skin: 0xc28f74, hair: 0x2a201b, shirt: 0x3a3530, pants: 0x272321, warden: true });
+    modelWarden.position.set(1.12, 0, 0);
+    modelPivot.add(modelPlayer, modelWarden);
+    modelScene.add(modelPivot);
+  }
+
+  function showModelViewer() {
+    if (!modelScene) buildModelViewer();
+    G.state = 'models';
+    resetTouchInput();
+    if (document.pointerLockElement) document.exitPointerLock();
+    ui.menu.classList.add('hidden'); ui.hud.classList.add('hidden');
+    ui.pause.classList.add('hidden'); ui.help.classList.add('hidden'); ui.result.classList.add('hidden');
+    ui.modelViewer.classList.remove('hidden');
+    document.body.classList.add('modeling');
+    modelPivot.rotation.y = 0.38;
+    ui.toastLayer.innerHTML = '';
+  }
+
+  function closeModelViewer() {
+    if (G.state !== 'models') return;
+    ui.modelViewer.classList.add('hidden');
+    document.body.classList.remove('modeling');
+    showMenu();
+  }
+
+  function updateModelViewer(dt) {
+    if (!modelScene) return;
+    modelPivot.rotation.y += dt * 0.28;
+    animateHuman(modelPlayer, dt, false, 0, false);
+    animateHuman(modelWarden, dt, false, 0, false);
+  }
+
   function showMenu() {
     G.state = 'menu';
     G.players = []; G.packages = []; G.human = null; G.warden = null;
@@ -1803,6 +1902,8 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     ui.help.classList.add('hidden');
     ui.result.classList.add('hidden');
     ui.toastLayer.innerHTML = '';
+    if (ui.modelViewer) ui.modelViewer.classList.add('hidden');
+    document.body.classList.remove('modeling');
     fpArms.visible = false;
     setFloor(1, true);
     camera.position.set(0, 1.62, 0.2);
@@ -1863,6 +1964,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     renderer.setSize(innerWidth, innerHeight, false);
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
+    if (modelCam) { modelCam.aspect = innerWidth / innerHeight; modelCam.updateProjectionMatrix(); }
     const map = ui.minimap;
     if (map) {
       map.width = 248; map.height = 196;
@@ -1872,6 +1974,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   function frame() {
     requestAnimationFrame(frame);
     const dt = Math.min(0.05, clockDelta());
+    if (G.state === 'models') { updateModelViewer(dt); renderer.render(modelScene, modelCam); return; }
     if (G.state === 'playing') updateGame(dt);
     else if (G.human) updateCamera();
     if (G.human && G.state === 'playing') {
@@ -1999,6 +2102,8 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     ui.play.addEventListener('click', () => { startGame(20); });
     if (ui.play3) ui.play3.addEventListener('click', () => startGame(3));
     if (ui.play20) ui.play20.addEventListener('click', () => startGame(20));
+    if (ui.modelBtn) ui.modelBtn.addEventListener('click', showModelViewer);
+    if (ui.modelClose) ui.modelClose.addEventListener('click', closeModelViewer);
     ui.pauseBtn.addEventListener('click', pauseGame);
     if (ui.wardenToggle) ui.wardenToggle.addEventListener('click', toggleWardenPause);
     ui.helpBtn.addEventListener('click', () => openHelp(G.state === 'paused' ? 'paused' : 'playing'));
@@ -2027,6 +2132,10 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     });
     window.addEventListener('keydown', e => {
       if (e.repeat) return;
+      if (G.state === 'models') {
+        if (e.code === 'Escape' || e.code === 'Enter') closeModelViewer();
+        return;
+      }
       if (e.code === 'Escape') {
         if (G.state === 'help') closeHelp();
         else if (G.state === 'paused') resumeGame();
