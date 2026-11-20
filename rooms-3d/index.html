@@ -188,6 +188,71 @@ kbd{font-family:ui-monospace,Consolas,monospace;background:#1c1712;color:#f0e6d4
   .clock{min-width:140px}.clock b{font-size:19px}
   .hint{display:none}
 }
+
+/* ---------------- touch / mobile ---------------- */
+.touch-only{display:none!important}
+#touch-ui{position:absolute;inset:0;pointer-events:none;z-index:12}
+#joystick{position:absolute;left:16px;bottom:16px;width:112px;height:112px;border-radius:50%;border:1px solid rgba(235,217,190,.42);background:radial-gradient(circle,rgba(236,223,200,.12),rgba(10,8,6,.46));pointer-events:auto;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+#joystick-knob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(238,226,203,.86);border:1px solid rgba(255,255,255,.4);box-shadow:0 3px 10px rgba(0,0,0,.35)}
+.touch-buttons{position:absolute;right:18px;bottom:18px;display:flex;align-items:flex-end;gap:12px;pointer-events:none}
+.touch-control{pointer-events:auto;touch-action:none;border-radius:50%;border:1px solid rgba(241,222,191,.55);background:rgba(120,55,42,.88);color:#fff6e8;font-family:var(--sans);font-weight:700;letter-spacing:.04em;box-shadow:0 5px 18px rgba(0,0,0,.35);user-select:none;-webkit-user-select:none}
+#touch-sprint{width:62px;height:62px;font-size:11px;background:rgba(56,45,33,.82);margin-bottom:4px}
+#touch-action{width:78px;height:78px;font-size:13px}
+.touch-control.on{background:#c36a50;transform:scale(.94)}
+body.touch .touch-only{display:block!important}
+body.touch .desktop-only{display:none!important}
+body.touch{overscroll-behavior:none}
+body.touch #game{touch-action:none}
+body.touch #hint,body.touch #lockHint,body.touch .feed{display:none!important}
+body.touch #prompt{bottom:118px;font-size:11px;max-width:74vw}
+body.touch #prompt kbd{display:none}
+body.touch .hud-left{top:82px;width:184px;transform:scale(.82);transform-origin:top left;gap:7px}
+body.touch .hud-left .minimap-wrap,body.touch .hud-left .inventory{display:none}
+body.touch .hud-left .home-card{padding:7px 9px}
+body.touch .hud-left .home-card b{font-size:12px}
+body.touch .hud-right{top:82px;width:188px;transform:scale(.86);transform-origin:top right}
+body.touch .hud-right .feed{display:none!important}
+body.touch .brand{display:none}
+body.touch .where{display:block;min-width:96px;padding:7px 10px}
+body.touch .where strong{font-size:12px}
+body.touch .hud-top{left:10px;right:10px;top:10px;gap:8px}
+body.touch .clock{min-width:130px;padding:6px 12px}
+body.touch .clock b{font-size:20px}
+body.touch .top-actions{gap:5px}
+body.touch .warden-pause{height:30px;padding:0 8px;font-size:9px}
+body.touch .round{width:30px;height:30px}
+body.touch .fx-card{padding:5px 6px;font-size:8px}
+#mobile-rotate{position:absolute;inset:0;z-index:60;background:#0b0907;color:#efe1c7;display:none!important;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px}
+#mobile-rotate b{font-size:22px;letter-spacing:.08em}
+#mobile-rotate span{font-size:11px;color:#b9a589}
+@media (orientation:portrait){
+  body.touch #mobile-rotate{display:flex!important}
+  body.touch #touch-ui{display:none!important}
+}
+@media (max-height:540px) and (orientation:landscape){
+  body.touch .menu-sheet{width:96vw;max-height:96vh;padding:12px 18px;overflow:auto}
+  body.touch .menu-sheet .eyebrow{margin-bottom:8px;font-size:8px}
+  body.touch .menu-sheet h1{font-size:30px;margin-bottom:8px}
+  body.touch .menu-sheet h1 em{font-size:18px;vertical-align:3px}
+  body.touch .menu-sheet .lede,body.touch .menu-sheet .menu-foot,body.touch .menu-sheet .floor-list,body.touch .menu-sheet .callout,body.touch .menu-sheet .keys,body.touch .menu-sheet .fine{display:none!important}
+  body.touch .menu-cols{display:block;border-top:0;padding-top:0}
+  body.touch .rule{margin-bottom:5px;gap:8px}
+  body.touch .rule b{height:18px;padding:3px 5px 0;flex-basis:21px;font-size:8px}
+  body.touch .rule strong{font-size:11px;margin-bottom:1px}
+  body.touch .rule span{font-size:9px;line-height:1.35}
+  body.touch .touch-tip{font-size:9px;margin:5px 0 8px;color:#7c6b56}
+  body.touch .primary{padding:9px 12px;font-size:12px}
+  body.touch .mode-row{margin-top:6px}
+  body.touch .mode-row .ghost{padding:6px 8px;font-size:10px}
+  body.touch .hud-left{top:68px}
+  body.touch .hud-right{top:68px}
+  body.touch .home-card small{font-size:8px}
+}
+@media (max-width:760px){
+  body.touch .menu-sheet h1{font-size:30px}
+  body.touch .menu-sheet h1 em{font-size:18px}
+  body.touch .menu-cols{gap:8px}
+}
 </style>
 </head>
 <body>
@@ -209,9 +274,10 @@ kbd{font-family:ui-monospace,Consolas,monospace;background:#1c1712;color:#f0e6d4
           <div class="rule"><b>02</b><div><strong>每个包都会抽一个效果</strong><span>正面存成卡，按 1 / 2 / 3 释放；负面当场生效。</span></div></div>
           <div class="rule"><b>03</b><div><strong>被秦姨抓住不会出局</strong><span>手里的包掉在原地，人被送回已发现的房间。</span></div></div>
           <div class="rule"><b>04</b><div><strong>分数是当下的库存</strong><span>房间被别人偷，分数会掉；开局每人 3 只包。</span></div></div>
-          <div class="keys">
+          <div class="keys desktop-only">
             <span><kbd>WASD</kbd>移动</span><span><kbd>鼠标</kbd>看</span><span><kbd>Shift</kbd>冲刺</span><span><kbd>E</kbd>拾取 / 楼梯</span><span><kbd>1–3</kbd>效果</span><span><kbd>P</kbd>暂停</span>
           </div>
+          <div class="touch-tip touch-only">左下摇杆移动 · 右侧拖动看 · 右下按钮拾取 / 冲刺</div>
         </div>
         <div class="menu-right">
           <div class="floor-list"><span>B1</span>旧仓库 · 配电间 · 洗衣房 · 杂物间 · 锅炉房 · 冷库 · 暗廊</div>
@@ -220,7 +286,8 @@ kbd{font-family:ui-monospace,Consolas,monospace;background:#1c1712;color:#f0e6d4
           <div class="callout">第一人称原型<br><small>角色使用可替换的程序化人形，先看玩法与空间；下一步换真人模型与动作。</small></div>
           <button id="play" class="primary">进入宿舍楼 <span>→</span></button>
           <div class="mode-row"><button class="ghost" id="play-3">3 分钟测试局</button><button class="ghost" id="play-20">20 分钟标准局</button></div>
-          <p class="fine">单机 · 1 名真人 + 3 名 AI 学生 + 秦姨。建议电脑 + 鼠标；手机版后续适配。</p>
+          <p class="fine desktop-only">单机 · 1 名真人 + 3 名 AI 学生 + 秦姨。建议电脑 + 鼠标。</p>
+          <p class="fine touch-only">单机 · 1 名真人 + 3 名 AI 学生 + 秦姨。手机建议横屏，关掉其他应用。</p>
         </div>
       </div>
       <div class="menu-foot"><span>本版是 P1/P2 可玩原型</span><span>编号 04 / 03:17</span></div>
@@ -250,6 +317,14 @@ kbd{font-family:ui-monospace,Consolas,monospace;background:#1c1712;color:#f0e6d4
     <div id="crosshair"><i></i><i></i></div>
     <div id="prompt" class="prompt"><kbd>E</kbd><span></span></div>
     <div id="hint" class="hint">WASD 移动 · 鼠标看 · Shift 冲刺 · E 拾取 / 楼梯 · 1–3 效果 · F 暂停秦姨 · P 暂停</div>
+    <div id="touch-ui" class="touch-only">
+      <div id="joystick"><div id="joystick-knob"></div></div>
+      <div class="touch-buttons">
+        <button id="touch-sprint" class="touch-control" type="button">冲刺</button>
+        <button id="touch-action" class="touch-control" type="button">拾取</button>
+      </div>
+    </div>
+    <div id="mobile-rotate" class="touch-only"><b>把手机横过来</b><span>横屏视野更大，操作也更顺手</span></div>
     <div id="captureFlash" class="capture-flash"><span>秦姨抓住了你</span><small>手里的包掉在原地</small></div>
     <div id="lockHint" class="lock-hint">点击画面继续控制视角</div>
   </div>
@@ -369,9 +444,12 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   ];
 
   /* ---------------- Three ---------------- */
+  const IS_TOUCH = new URLSearchParams(location.search).get('touch') === '1'
+    || (matchMedia('(pointer: coarse)').matches && (navigator.maxTouchPoints || 0) > 0);
+  if (IS_TOUCH) document.body.classList.add('touch');
   const canvas = $('game');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !IS_TOUCH, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, IS_TOUCH ? 1.5 : 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
@@ -748,7 +826,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     helpClose: $('helpClose'), again: $('again'), toMenu: $('toMenu'), pauseBtn: $('pauseBtn'), helpBtn: $('helpBtn'), wardenToggle: $('wardenToggle'),
     resultTitle: $('resultTitle'), resultSub: $('resultSub'), resultStamp: $('resultStamp'),
     resultEyebrow: $('resultEyebrow'), statScore: $('statScore'), statCaught: $('statCaught'), statRank: $('statRank'),
-    resultRows: $('resultRows')
+    resultRows: $('resultRows'), joy: $('joystick'), joyKnob: $('joystick-knob'), touchAction: $('touch-action'), touchSprint: $('touch-sprint')
   };
   const mapCtx = ui.minimap.getContext('2d');
 
@@ -761,6 +839,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     homeRings: []
   };
   const keys = Object.create(null);
+  const touchInput = { joyId: null, joyX: 0, joyY: 0, lookId: null, lookX: 0, lookY: 0, sprint: false };
   const dynamic = new THREE.Group();
   world.add(dynamic);
 
@@ -787,7 +866,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     let s = p.isHuman ? BASE_SPEED : 3.55;
     if (p.rushUntil > G.t) s *= 1.5;
     if (p.slowUntil > G.t) s *= 0.55;
-    if (p.isHuman && (keys.ShiftLeft || keys.ShiftRight)) s = SPRINT_SPEED;
+    if (p.isHuman && (keys.ShiftLeft || keys.ShiftRight || touchInput.sprint)) s = SPRINT_SPEED;
     return s;
   }
   function roomAtChar(p) { return roomAt(p.floor, p.pos.x, p.pos.z); }
@@ -904,7 +983,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   function startGame(minutes = 20) {
     G.minutes = minutes;
-    G.t = 0; G.timeLeft = minutes * 60; G.state = 'playing'; G.wardenPaused = false;
+    G.t = 0; G.timeLeft = minutes * 60; G.state = 'playing'; G.wardenPaused = false; resetTouchInput();
     G.players = []; G.packages = []; G.warden = null; G.decoy = null;
     G.result = null; G.lastRoomId = null; G.lastHud = 0; G.lastMap = 0;
     while (dynamic.children.length) dynamic.remove(dynamic.children[0]);
@@ -1293,6 +1372,10 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (keys.KeyS || keys.ArrowDown) f -= 1;
     if (keys.KeyD || keys.ArrowRight) s += 1;
     if (keys.KeyA || keys.ArrowLeft) s -= 1;
+    if (IS_TOUCH) {
+      f += -touchInput.joyY;
+      s += touchInput.joyX;
+    }
     const len = Math.hypot(f, s);
     let moving = false;
     if (len > 0) {
@@ -1551,6 +1634,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   /* ---------------- UI ---------------- */
   function setPrompt(text, showKey = true) {
     if (!ui.prompt) return;
+    if (ui.touchAction) ui.touchAction.textContent = text.includes('换层') ? '换层' : '拾取';
     if (!text) { ui.prompt.classList.add('hidden'); return; }
     ui.prompt.classList.remove('hidden');
     const kbd = ui.prompt.querySelector('kbd');
@@ -1729,6 +1813,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   function pauseGame() {
     if (G.state !== 'playing') return;
+    resetTouchInput();
     G.state = 'paused';
     ui.pause.classList.remove('hidden');
     if (document.pointerLockElement) document.exitPointerLock();
@@ -1763,6 +1848,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   }
 
   function requestLock() {
+    if (IS_TOUCH) return;
     if (G.state !== 'playing') return;
     if (document.pointerLockElement === canvas) return;
     try {
@@ -1772,7 +1858,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
   }
 
   function resize() {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const dpr = Math.min(devicePixelRatio || 1, IS_TOUCH ? 1.5 : 2);
     renderer.setPixelRatio(dpr);
     renderer.setSize(innerWidth, innerHeight, false);
     camera.aspect = innerWidth / innerHeight;
@@ -1821,6 +1907,92 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     }
     updateHUD();
     promptForHuman();
+  }
+
+  function resetTouchInput() {
+    touchInput.joyId = null; touchInput.joyX = 0; touchInput.joyY = 0;
+    touchInput.lookId = null; touchInput.sprint = false;
+    if (ui.joyKnob) ui.joyKnob.style.transform = '';
+    if (ui.touchSprint) ui.touchSprint.classList.remove('on');
+  }
+
+  function bindTouchControls() {
+    if (!IS_TOUCH || !ui.joy) return;
+    const joy = ui.joy, knob = ui.joyKnob;
+    const moveJoy = (t) => {
+      const r = joy.getBoundingClientRect();
+      const max = r.width * 0.34;
+      let dx = t.clientX - (r.left + r.width / 2);
+      let dy = t.clientY - (r.top + r.height / 2);
+      const d = Math.hypot(dx, dy);
+      if (d > max) { dx = dx / d * max; dy = dy / d * max; }
+      touchInput.joyX = dx / max;
+      touchInput.joyY = dy / max;
+      if (knob) knob.style.transform = `translate(${dx}px,${dy}px)`;
+    };
+    joy.addEventListener('touchstart', e => {
+      if (touchInput.joyId != null) return;
+      const t = e.changedTouches[0];
+      touchInput.joyId = t.identifier;
+      moveJoy(t);
+      e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('touchmove', e => {
+      if (touchInput.joyId == null) return;
+      const t = [...e.changedTouches].find(x => x.identifier === touchInput.joyId);
+      if (!t) return;
+      moveJoy(t);
+      e.preventDefault();
+    }, { passive: false });
+    const endJoy = e => {
+      if (touchInput.joyId == null) return;
+      const t = [...e.changedTouches].find(x => x.identifier === touchInput.joyId);
+      if (!t) return;
+      touchInput.joyId = null;
+      touchInput.joyX = 0; touchInput.joyY = 0;
+      if (knob) knob.style.transform = '';
+    };
+    window.addEventListener('touchend', endJoy);
+    window.addEventListener('touchcancel', endJoy);
+
+    canvas.addEventListener('touchstart', e => {
+      if (G.state !== 'playing' || touchInput.lookId != null) return;
+      const t = e.changedTouches[0];
+      touchInput.lookId = t.identifier;
+      touchInput.lookX = t.clientX;
+      touchInput.lookY = t.clientY;
+      e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('touchmove', e => {
+      if (touchInput.lookId == null) return;
+      const t = [...e.changedTouches].find(x => x.identifier === touchInput.lookId);
+      if (!t) return;
+      const dx = t.clientX - touchInput.lookX, dy = t.clientY - touchInput.lookY;
+      touchInput.lookX = t.clientX; touchInput.lookY = t.clientY;
+      G.cameraYaw -= dx * 0.0045;
+      G.cameraPitch = clamp(G.cameraPitch - dy * 0.0035, -1.25, 1.1);
+      e.preventDefault();
+    }, { passive: false });
+    const endLook = e => {
+      if (touchInput.lookId == null) return;
+      if (![...e.changedTouches].some(x => x.identifier === touchInput.lookId)) return;
+      touchInput.lookId = null;
+    };
+    window.addEventListener('touchend', endLook);
+    window.addEventListener('touchcancel', endLook);
+
+    if (ui.touchAction) {
+      ui.touchAction.addEventListener('click', () => {
+        if (G.state === 'playing') G.pendingInteract = true;
+      });
+    }
+    if (ui.touchSprint) {
+      const on = e => { touchInput.sprint = true; ui.touchSprint.classList.add('on'); e.preventDefault(); };
+      const off = () => { touchInput.sprint = false; ui.touchSprint.classList.remove('on'); };
+      ui.touchSprint.addEventListener('touchstart', on, { passive: false });
+      ui.touchSprint.addEventListener('touchend', off);
+      ui.touchSprint.addEventListener('touchcancel', off);
+    }
   }
 
   function bindEvents() {
@@ -1883,6 +2055,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       if (document.hidden && G.state === 'playing') pauseGame();
     });
     window.addEventListener('resize', resize);
+    bindTouchControls();
     resize();
   }
 
@@ -1894,6 +2067,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       return {
         state: G.state, t: +G.t.toFixed(2), timeLeft: +G.timeLeft.toFixed(2), floor: G.human.floor,
         room: roomAtChar(G.human)?.name || 'corridor', score: scoreOf(G.human),
+        yaw: +G.cameraYaw.toFixed(3), pitch: +G.cameraPitch.toFixed(3),
         wardenPaused: !!G.wardenPaused,
         carrying: G.human.carrying.map(b => b.id), cards: G.human.cards.slice(),
         captures: G.human.captures, pos: { x: +G.human.pos.x.toFixed(2), z: +G.human.pos.z.toFixed(2) },
