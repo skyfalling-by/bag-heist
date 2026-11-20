@@ -77,6 +77,9 @@ kbd{font-family:ui-monospace,Consolas,monospace;background:#1c1712;color:#f0e6d4
 .top-actions{margin-left:auto;display:flex;gap:7px;pointer-events:auto}
 .round{width:32px;height:32px;border-radius:50%;border:1px solid rgba(235,216,190,.3);background:rgba(16,13,10,.75);color:#eadcc6;font-size:14px;cursor:pointer}
 .round:hover{background:rgba(180,60,45,.75)}
+.warden-pause{height:32px;padding:0 11px;border:1px solid rgba(235,216,190,.35);background:rgba(16,13,10,.75);color:#eadcc6;font-family:var(--sans);font-size:10px;letter-spacing:.06em;cursor:pointer;white-space:nowrap}
+.warden-pause:hover{background:rgba(180,60,45,.65)}
+.warden-pause.active{background:#b85b4c;border-color:#e5b09f;color:#fff8ee}
 
 .hud-left{position:absolute;left:18px;top:86px;width:238px;display:flex;flex-direction:column;gap:10px}
 .home-card{background:var(--paper);color:var(--ink);padding:9px 12px;border-top:2px solid var(--red);box-shadow:0 4px 14px rgba(0,0,0,.25)}
@@ -229,7 +232,7 @@ kbd{font-family:ui-monospace,Consolas,monospace;background:#1c1712;color:#f0e6d4
       <div class="brand"><b>四房大盗</b><span>FOUR ROOMS · 3D</span></div>
       <div class="where"><span id="floorName">B1</span><strong id="roomName">门厅</strong></div>
       <div class="clock"><span>天亮倒计时</span><b id="timer">20:00</b><div class="clock-bar"><i id="clockFill"></i></div></div>
-      <div class="top-actions"><button id="helpBtn" class="round" title="操作">?</button><button id="pauseBtn" class="round" title="暂停">Ⅱ</button></div>
+      <div class="top-actions"><button id="wardenToggle" class="warden-pause" title="测试用：暂停/恢复秦姨">暂停秦姨</button><button id="helpBtn" class="round" title="操作">?</button><button id="pauseBtn" class="round" title="暂停">Ⅱ</button></div>
     </div>
 
     <div class="hud-left">
@@ -246,7 +249,7 @@ kbd{font-family:ui-monospace,Consolas,monospace;background:#1c1712;color:#f0e6d4
 
     <div id="crosshair"><i></i><i></i></div>
     <div id="prompt" class="prompt"><kbd>E</kbd><span></span></div>
-    <div id="hint" class="hint">WASD 移动 · 鼠标看 · Shift 冲刺 · E 拾取 / 楼梯 · 1–3 效果 · P 暂停</div>
+    <div id="hint" class="hint">WASD 移动 · 鼠标看 · Shift 冲刺 · E 拾取 / 楼梯 · 1–3 效果 · F 暂停秦姨 · P 暂停</div>
     <div id="captureFlash" class="capture-flash"><span>秦姨抓住了你</span><small>手里的包掉在原地</small></div>
     <div id="lockHint" class="lock-hint">点击画面继续控制视角</div>
   </div>
@@ -271,6 +274,7 @@ kbd{font-family:ui-monospace,Consolas,monospace;background:#1c1712;color:#f0e6d4
         <div><b>回房</b><span>带着包走回自己的房间，自动入库，变成库存。</span></div>
         <div><b>效果</b><span>捡包时随机触发。正面卡按 1 / 2 / 3 释放，负面立刻生效。</span></div>
         <div><b>楼梯</b><span>靠近楼梯按 E 换层；1F 到 B1 只有一处，1F 到 2F 有两处。</span></div>
+        <div><b>测试</b><span>按 F 或点右上“暂停秦姨”，可冻结/恢复秦姨行动。</span></div>
         <div><b>秦姨</b><span>优先追带包的人。被抓会掉包、被送到已发现的房间，不会出局。</span></div>
       </div>
       <div class="help-note">角色模型是原型占位；下一步会换成更接近真人的 glTF 模型和动作。现在先看空间、偷包、效果和秦姨追逐。</div>
@@ -741,7 +745,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     captureFlash: $('captureFlash'), lockHint: $('lockHint'), fade: $('fade'),
     toastLayer: $('toast-layer'), play: $('play'), play3: $('play-3'), play20: $('play-20'),
     resume: $('resume'), restart: $('restart'), quit: $('quit'), pauseHelp: $('pauseHelp'),
-    helpClose: $('helpClose'), again: $('again'), toMenu: $('toMenu'), pauseBtn: $('pauseBtn'), helpBtn: $('helpBtn'),
+    helpClose: $('helpClose'), again: $('again'), toMenu: $('toMenu'), pauseBtn: $('pauseBtn'), helpBtn: $('helpBtn'), wardenToggle: $('wardenToggle'),
     resultTitle: $('resultTitle'), resultSub: $('resultSub'), resultStamp: $('resultStamp'),
     resultEyebrow: $('resultEyebrow'), statScore: $('statScore'), statCaught: $('statCaught'), statRank: $('statRank'),
     resultRows: $('resultRows')
@@ -900,7 +904,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
   function startGame(minutes = 20) {
     G.minutes = minutes;
-    G.t = 0; G.timeLeft = minutes * 60; G.state = 'playing';
+    G.t = 0; G.timeLeft = minutes * 60; G.state = 'playing'; G.wardenPaused = false;
     G.players = []; G.packages = []; G.warden = null; G.decoy = null;
     G.result = null; G.lastRoomId = null; G.lastHud = 0; G.lastMap = 0;
     while (dynamic.children.length) dynamic.remove(dynamic.children[0]);
@@ -926,6 +930,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     };
     WARDEN.position.set(0, 0, 0); WARDEN.rotation.y = 0;
     G.warden.group.visible = true;
+    setWardenPaused(false);
 
     setFloor(human.home ? human.floor : 1, true);
     human.floor = homes[0].floor; human.pos.set(spawnForHome(homes[0]).x, 0, spawnForHome(homes[0]).z); human.yaw = spawnForHome(homes[0]).yaw;
@@ -1446,9 +1451,28 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     return best;
   }
 
+  function setWardenPaused(on) {
+    G.wardenPaused = !!on;
+    if (ui.wardenToggle) {
+      ui.wardenToggle.textContent = G.wardenPaused ? '恢复秦姨' : '暂停秦姨';
+      ui.wardenToggle.classList.toggle('active', G.wardenPaused);
+    }
+  }
+
+  function toggleWardenPause() {
+    if (G.state !== 'playing' || !G.warden) return;
+    setWardenPaused(!G.wardenPaused);
+    toast(G.wardenPaused ? '秦姨已暂停（测试）' : '秦姨恢复行动');
+    feed(G.wardenPaused ? '测试：秦姨被冻结，可以安心搬包。' : '测试：秦姨恢复行动。', '#b9a181');
+  }
+
   function updateWarden(dt) {
     const w = G.warden;
     if (!w) return;
+    if (G.wardenPaused) {
+      animateHuman(WARDEN, dt, false, 0, false);
+      return;
+    }
     if (w.freezeUntil > G.t || w.stunUntil > G.t) {
       animateHuman(WARDEN, dt, false, 0, false);
       return;
@@ -1804,6 +1828,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     if (ui.play3) ui.play3.addEventListener('click', () => startGame(3));
     if (ui.play20) ui.play20.addEventListener('click', () => startGame(20));
     ui.pauseBtn.addEventListener('click', pauseGame);
+    if (ui.wardenToggle) ui.wardenToggle.addEventListener('click', toggleWardenPause);
     ui.helpBtn.addEventListener('click', () => openHelp(G.state === 'paused' ? 'paused' : 'playing'));
     ui.resume.addEventListener('click', resumeGame);
     ui.restart.addEventListener('click', () => startGame(G.minutes));
@@ -1841,6 +1866,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
         else if (G.state === 'paused') resumeGame();
         return;
       }
+      if (e.code === 'KeyF') { toggleWardenPause(); return; }
       if (G.state === 'menu' && e.code === 'Enter') { startGame(20); return; }
       if (G.state === 'result' && e.code === 'Enter') { startGame(G.minutes); return; }
       if (G.state !== 'playing') return;
@@ -1868,6 +1894,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
       return {
         state: G.state, t: +G.t.toFixed(2), timeLeft: +G.timeLeft.toFixed(2), floor: G.human.floor,
         room: roomAtChar(G.human)?.name || 'corridor', score: scoreOf(G.human),
+        wardenPaused: !!G.wardenPaused,
         carrying: G.human.carrying.map(b => b.id), cards: G.human.cards.slice(),
         captures: G.human.captures, pos: { x: +G.human.pos.x.toFixed(2), z: +G.human.pos.z.toFixed(2) },
         players: G.players.map(p => ({
@@ -1897,7 +1924,8 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
     setTime: s => { G.timeLeft = s; G.t = Math.max(0, G.minutes * 60 - s); },
     finish: finishGame,
     packageList: () => G.packages.map(b => ({ id: b.id, room: b.roomId, floor: b.floor, x: +b.x.toFixed(1), z: +b.z.toFixed(1), home: b.roomId === G.human?.home })),
-    wardenPos: () => G.warden ? { floor: G.warden.floor, x: G.warden.pos.x, z: G.warden.pos.z } : null,
+    wardenPos: () => G.warden ? { floor: G.warden.floor, x: G.warden.pos.x, z: G.warden.pos.z, paused: !!G.wardenPaused } : null,
+    setWardenPaused,
     menu: showMenu
   };
 
